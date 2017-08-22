@@ -1,18 +1,105 @@
-<canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+<html>
+  <head>
+    <title>Empire IO</title>
+  </head>
 
-<script src="https://cdn.socket.io/socket.io-1.4.5.js">
-</script>
+  <body>
+    <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
 
-<script>
-    var ctx = document.getElementById("ctx").getContext("2d");
-    ctx.font = '30px Arial';
+    </br>
 
-    var socket = io();
+    <button id="mapRand">Randomize Map</button>
 
-    socket.on('newPositions', function(data)
-    {
-        ctx.clearRect(0,0,500,500);
-        for(var i = 0 ; i < data.length; i++)
-            ctx.fillText(data[i].number,data[i].x,data[i].y);
-    });
-</script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js">
+    </script>
+
+    <script>
+        // Creates an object for the canvas
+        var ctx = document.getElementById("ctx").getContext("2d");
+        ctx.font = '30px Arial';
+
+        // Creates an object for the randomize map button
+        var mapRand = document.getElementById('mapRand');
+
+        // Calls a function to reset the map grid on button click
+        mapRand.onclick = function()
+        {
+          socket.emit('mapRand');
+        }
+
+        // Creates the socket.io object
+        var socket = io();
+
+        // Creates and sets the default for the map matrix
+        var mapMatrix = [
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5],
+            [1, 2, 3, 4, 5]
+        ];
+
+        // Initially sets the map grid
+        socket.on('mapInit', function(data)
+        {
+            var mapGrid = data;
+
+            // Convert into multi-demensional array
+            var counter = 0;
+
+            for (var i = 0; i < 5; i++)
+            {
+              for (var j = 0; j < 5; j++)
+              {
+                mapMatrix[i][j] = mapGrid[counter++];
+              }
+            }
+
+            console.log(mapMatrix);
+        })
+
+        // Sets the map grid on update (25 times a second)
+        socket.on('update', function(data)
+        {
+            ctx.clearRect(0,0,500,500);
+
+            // Reads the Map Matrix and colors the tiles accordingly
+            for (var i = 0; i < 5; i++)
+            {
+              for (var j = 0; j < 5; j++)
+              {
+                var fillType = mapMatrix[i][j].type;
+
+                switch (fillType)
+                {
+                  case 1:
+                    ctx.fillStyle = "red";
+                    break;
+                  case 2:
+                    ctx.fillStyle = "grey";
+                    break;
+                  case 3:
+                    ctx.fillStyle = "green";
+                    break;
+                  case 4:
+                    ctx.fillStyle = "gold";
+                    break;
+                  default:
+                    ctx.fillStyle = "white";
+                }
+
+                ctx.fillRect(100 * j, 100 * i, 100, 100);
+              }
+            }
+
+            ctx.fillStyle = "black";
+
+            for(var i = 0 ; i < data.length; i++)
+                ctx.fillText(data[i].number,data[i].x,data[i].y);
+
+        });
+
+    </script>
+  </body>
+
+</html>
