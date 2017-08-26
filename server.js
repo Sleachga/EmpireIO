@@ -14,6 +14,12 @@ app.use('/client',express.static(__dirname + '/client'));
 serv.listen(2000);
 console.log("Server started.");
 
+// server.js
+const UNIT_JS = require('./unit.js');
+// let unit = UNIT_JS.unit(5);
+//
+// console.log("DID IT WORK? " + unit);
+
 var serverReady = false;
 
 // Default initialization function for all objects
@@ -38,13 +44,13 @@ var mapCell = function(id, type)
 }
 
 // Object containing the map grid (0-25)
-var mapGrid = {};
+var mapGrid = [];
 
 // Called as soon as the server starts
 var serverStart = function()
 {
   console.log("Rendering Map...");
-  for (var i = 0; i < 25; i++)
+  for (var i = 0; i < 100; i++)
   {
     var cell = mapCell(i, randomizeMap());
   }
@@ -56,51 +62,28 @@ var serverStart = function()
 var randomizeMap = function()
 {
   var retVal;
-  var randNum = Math.floor(10 * Math.random());
+
+  // Pick a random number 0-99
+  var randNum = Math.floor(100 * Math.random());
   console.log("Pre Processed Retval: " + randNum);
 
   /* Sets retval based on randNum
-   * 0 - 40% chance - normal tile
-   * 1 - 20% chance - food tile
+   * 0 - 60% chance - normal tile
+   * 1 - 10% chance - food tile
    * 2 - 10% chance - stone tile
-   * 3 - 20% chance - wood tile
+   * 3 - 10% chance - wood tile
    * 4 - 10% chance - gold tile
    */
-  switch (randNum)
-  {
-    case 0:
-      retVal = 0;
-      break;
-    case 1:
-      retVal = 0;
-      break;
-    case 2:
-      retVal = 0;
-      break;
-    case 3:
-      retVal = 0;
-      break;
-    case 4:
-      retVal = 1;
-      break;
-    case 5:
-      retVal = 1;
-      break;
-    case 6:
-      retVal = 2;
-      break;
-    case 7:
-      retVal = 3;
-      break;
-    case 8:
-      retVal = 3;
-      break;
-    case 9:
-      retVal = 4;
-      break;
-    default:
-      retVal = 0;
-  }
+   if (randNum < 70)
+     retVal = 0;
+   else if (randNum >= 70 && randNum < 80)
+     retVal = 1;
+   else if (randNum >= 80 && randNum < 90)
+     retVal = 3;
+   else if (randNum >= 90 && randNum < 95)
+     retVal = 2;
+   else
+     retVal = 4;
 
   console.log("Post Processed Retval: " + retVal);
   return retVal;

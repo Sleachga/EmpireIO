@@ -1,6 +1,8 @@
 <html>
   <head>
     <title>Empire IO</title>
+    <link rel="icon" href="client/img/favicon.ico"/>
+    <link rel="stylesheet" href="client/index.css"/>
   </head>
 
   <body>
@@ -8,18 +10,37 @@
 
     </br>
 
-    <button id="mapRand">Randomize Map</button>
+    <button id="mapRandButton">Randomize Map</button>
 
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js">
-    </script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="client/img/images.js"></script>
 
     <script>
+
         // Creates an object for the canvas
         var ctx = document.getElementById("ctx").getContext("2d");
+        ctx.canvas.width = window.innerWidth - 20;
+        ctx.canvas.height = window.innerHeight - 20;
         ctx.font = '30px Arial';
 
+        var WIDTH = window.innerWidth;
+        var HEIGHT = window.innerHeight;
+        var mouseX = 0;
+        var mouseY = 0;
+        var angle = 0;
+
+        document.onmousemove = function(event)
+        {
+            // Set global mouseX and mouseY variables
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+            var x = -WIDTH/2 + event.clientX;
+            var y = -HEIGHT/2 + event.clientY;
+            angle = Math.atan2(y, x) / Math.PI * 180;
+        }
+
         // Creates an object for the randomize map button
-        var mapRand = document.getElementById('mapRand');
+        var mapRand = document.getElementById('mapRandButton');
 
         // Calls a function to reset the map grid on button click
         mapRand.onclick = function()
@@ -32,11 +53,16 @@
 
         // Creates and sets the default for the map matrix
         var mapMatrix = [
-            [1, 2, 3, 4, 5],
-            [1, 2, 3, 4, 5],
-            [1, 2, 3, 4, 5],
-            [1, 2, 3, 4, 5],
-            [1, 2, 3, 4, 5]
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         ];
 
         // Initially sets the map grid
@@ -47,10 +73,11 @@
             // Convert into multi-demensional array
             var counter = 0;
 
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 10; i++)
             {
-              for (var j = 0; j < 5; j++)
+              for (var j = 0; j < 10; j++)
               {
+                console.log(mapGrid[counter]);
                 mapMatrix[i][j] = mapGrid[counter++];
               }
             }
@@ -61,36 +88,40 @@
         // Sets the map grid on update (25 times a second)
         socket.on('update', function(data)
         {
-            ctx.clearRect(0,0,500,500);
+            ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
 
             // Reads the Map Matrix and colors the tiles accordingly
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 10; i++)
             {
-              for (var j = 0; j < 5; j++)
+              for (var j = 0; j < 10; j++)
               {
                 var fillType = mapMatrix[i][j].type;
 
                 switch (fillType)
                 {
                   case 1:
-                    ctx.fillStyle = "red";
+                    ctx.drawImage(Img.foodTile1, 100 * j, 100 * i);
                     break;
-                  case 2:
-                    ctx.fillStyle = "grey";
-                    break;
-                  case 3:
-                    ctx.fillStyle = "green";
-                    break;
-                  case 4:
-                    ctx.fillStyle = "gold";
-                    break;
-                  default:
-                    ctx.fillStyle = "white";
-                }
 
-                ctx.fillRect(100 * j, 100 * i, 100, 100);
+                  case 2:
+                    ctx.drawImage(Img.stoneTile1, 100 * j, 100 * i);
+                    break;
+
+                  case 3:
+                  ctx.drawImage(Img.forestTile1, 100 * j, 100 * i);
+                  break;
+
+                  case 4:
+                  ctx.drawImage(Img.goldTile1, 100 * j, 100 * i);
+                  break;
+
+                  default:
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(100 * j, 100 * i, 100, 100);
+                }
               }
             }
+            // TODO Function to check where the mouse is (highlight tile)
 
             ctx.fillStyle = "black";
 
@@ -100,6 +131,9 @@
         });
 
     </script>
-  </body>
+
+    <p></p>
+
+    </body>
 
 </html>
