@@ -27,7 +27,41 @@
         var HEIGHT = window.innerHeight;
         var mouseX = 0;
         var mouseY = 0;
+        var screenX = 0;
+        var screenY = 0;
+        var cameraSpeed = 3;
         var angle = 0;
+        var keys =
+        {
+          up: false,
+          down: false,
+          left: false,
+          right: false
+        };
+
+        document.onkeydown = function(event)
+        {
+            if(event.keyCode === 68) //d
+              keys.right = true;
+            else if(event.keyCode === 65) //a
+              keys.left = true;
+            else if(event.keyCode === 83) //s
+              keys.down = true;
+            else if(event.keyCode === 87) //w
+              keys.up = true;
+        };
+
+        document.onkeyup = function(event)
+        {
+            if(event.keyCode === 68) //d
+              keys.right = false;
+            else if(event.keyCode === 65) //a
+              keys.left = false;
+            else if(event.keyCode === 83) //s
+              keys.down = false;
+            else if(event.keyCode === 87) //w
+              keys.up = false;
+        };
 
         document.onmousemove = function(event)
         {
@@ -53,16 +87,16 @@
 
         // Creates and sets the default for the map matrix
         var mapMatrix = [
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 1
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 2
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 3
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 4
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 5
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 6
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 7
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 8
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 9
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // 10
         ];
 
         // Initially sets the map grid
@@ -88,46 +122,56 @@
         // Sets the map grid on update (25 times a second)
         socket.on('update', function(data)
         {
-            ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
+          if (keys.right)
+            screenX -= cameraSpeed;
+          if (keys.left)
+            screenX += cameraSpeed;
+          if (keys.up)
+            screenY += cameraSpeed;
+          if (keys.down)
+            screenY -= cameraSpeed;
 
-            // Reads the Map Matrix and colors the tiles accordingly
-            for (var i = 0; i < 10; i++)
+          ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
+
+          // Reads the Map Matrix and colors the tiles accordingly
+          for (var i = 0; i < 10; i++)
+          {
+            for (var j = 0; j < 10; j++)
             {
-              for (var j = 0; j < 10; j++)
+              var fillType = mapMatrix[i][j].type;
+              var xOffset = screenX + (100 * j);
+              var yOffset = screenY + (100 * i);
+
+              switch (fillType)
               {
-                var fillType = mapMatrix[i][j].type;
-
-                switch (fillType)
-                {
-                  case 1:
-                    ctx.drawImage(Img.foodTile1, 100 * j, 100 * i);
-                    break;
-
-                  case 2:
-                    ctx.drawImage(Img.stoneTile1, 100 * j, 100 * i);
-                    break;
-
-                  case 3:
-                  ctx.drawImage(Img.forestTile1, 100 * j, 100 * i);
+                case 1:
+                  ctx.drawImage(Img.foodTile1, xOffset, yOffset);
                   break;
 
-                  case 4:
-                  ctx.drawImage(Img.goldTile1, 100 * j, 100 * i);
+                case 2:
+                  ctx.drawImage(Img.stoneTile1, xOffset, yOffset);
                   break;
 
-                  default:
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(100 * j, 100 * i, 100, 100);
-                }
+                case 3:
+                  ctx.drawImage(Img.forestTile1, xOffset, yOffset);
+                  break;
+
+                case 4:
+                  ctx.drawImage(Img.goldTile1, xOffset, yOffset);
+                  break;
+
+                default:
+                  ctx.fillStyle = 'white';
+                  ctx.fillRect(xOffset, yOffset, 100, 100);
               }
             }
-            // TODO Function to check where the mouse is (highlight tile)
+          }
+          // TODO Function to check where the mouse is (highlight tile)
 
-            ctx.fillStyle = "black";
+          ctx.fillStyle = "black";
 
-            for(var i = 0 ; i < data.length; i++)
-                ctx.fillText(data[i].number,data[i].x,data[i].y);
-
+          for(var i = 0 ; i < data.length; i++)
+              ctx.fillText(data[i].number,data[i].x,data[i].y);
         });
 
     </script>
@@ -135,5 +179,4 @@
     <p></p>
 
     </body>
-
 </html>
