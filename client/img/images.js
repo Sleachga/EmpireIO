@@ -31,5 +31,5 @@ Img.goldTile2.src = 'client/img/gold2.png';
 Img.grass = new Image();
 Img.grass.src = 'client/img/grass.png';
 
-Img.person = new Image();
-Img.person.src = 'client/img/person.png';
+Img.unit = new Image();
+Img.unit.src = 'client/img/person.png';

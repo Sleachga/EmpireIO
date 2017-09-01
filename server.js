@@ -1,3 +1,23 @@
+/*
+  TODO:
+
+  1. When a unit moves to a point, check what
+  cell the point is in and add it to that array
+
+  2. Move the units to specific points on the
+  tile that look good (maybe 5 spots?).
+
+  3. If you exceed the number of spots it will just
+  repeat spots visually and show the number of units
+  in the middle of the cell (maybe 1 for regular & 1
+  for combat)
+
+  4. Draw each tile differently based on how many
+  units are in the cell
+*/
+
+var DEBUG = true;
+
 var express = require('express');
 var app = express();
 var serv = require('http').Server(app);
@@ -15,10 +35,8 @@ serv.listen(2000);
 console.log("Server started.");
 
 // server.js
-const UNIT_JS = require('./unit.js');
-// let unit = UNIT_JS.unit(5);
-//
-// console.log("DID IT WORK? " + unit);
+// const UNIT_JS = require('./unit.js');
+// let unit = UNIT_JS.unit(25, 25, 100, 100);
 
 var serverReady = false;
 
@@ -31,7 +49,32 @@ var Entity = function()
         type: 0,
     }
     return self;
-}
+};
+
+// Object containing all units on the server
+var unitList = [];
+
+// Constructor for unit
+var unit = function(x, y, id, type)
+{
+    var self =
+    {
+        id: "",
+        type: 0,
+    }
+
+    self.id = id;
+    self.type = type;
+    self.x = x;
+    self.y = y;
+    unitList[id] = self;
+    console.log("Unit " + unitList[id].id
+      + " created at " + x + ", " + y
+      + " of type " + type);
+};
+
+// Object containing the map grid (0-25)
+var mapGrid = [];
 
 // Default for Map Cells
 var mapCell = function(id, type)
@@ -41,10 +84,7 @@ var mapCell = function(id, type)
   self.type = type;
   mapGrid[id] = self;
   console.log("Map cell " + mapGrid[id].id + " is value " + mapGrid[id].type);
-}
-
-// Object containing the map grid (0-25)
-var mapGrid = [];
+};
 
 // Called as soon as the server starts
 var serverStart = function()
@@ -56,7 +96,15 @@ var serverStart = function()
   }
 
   serverReady = true;
-}
+
+  if (DEBUG)
+  {
+    for (var i = 0; i < 5; i++)
+    {
+      var testUnits = unit(i * 110, i * 120, i, "normal");
+    }
+  }
+};
 
 // Randomizes the map
 var randomizeMap = function()
@@ -87,7 +135,7 @@ var randomizeMap = function()
 
   console.log("Post Processed Retval: " + retVal);
   return retVal;
-}
+};
 
 serverStart();
 
@@ -129,25 +177,11 @@ io.sockets.on('connection', function(socket)
 // Main loop function, runs 25 times a second
 setInterval(function()
 {
-    var pack = [];
+    var pack = unitList;
 
     for(var i in SOCKET_LIST)
     {
         var socket = SOCKET_LIST[i];
-        socket.x++;
-        socket.y++;
-        pack.push
-        ({
-            x:socket.x,
-            y:socket.y,
-            number:socket.number,
-        });
-    }
-
-    for(var i in SOCKET_LIST)
-    {
-        var socket = SOCKET_LIST[i];
-        // TODO make this a two part system, init AND update
         socket.emit('update', pack);
     }
 
