@@ -54,6 +54,9 @@ EX:
         ctx.canvas.height = window.innerHeight - 20;
         ctx.font = '30px Arial';
 
+        var gameX = 0;
+        var gameY = 0;
+
         var mouseX = 0;
         var mouseY = 0;
         var mouseDown = false;
@@ -63,8 +66,8 @@ EX:
           y: 0
         }
 
-        var xOffset = 0;
-        var yOffset = 0;
+        var clickOffsetX = 0;
+        var clickOffsetY = 0;
 
         var unitList;
 
@@ -109,8 +112,8 @@ EX:
         document.onmousemove = function(event)
         {
           // Set global mouseX and mouseY variables
-          mouseX = event.clientX + screenX;
-          mouseY = event.clientY + screenY;
+          mouseX = event.clientX;
+          mouseY = event.clientY;
           var x = -WIDTH/2 + event.clientX;
           var y = -HEIGHT/2 + event.clientY;
         }
@@ -128,6 +131,8 @@ EX:
         document.onmouseup = function(event)
         {
           mouseDown = false;
+          clickOffsetX = 0;
+          clickOffsetY = 0;
         }
 
         // Creates an object for the randomize map button
@@ -189,13 +194,25 @@ EX:
       setInterval(function()
       {
         if (keys.right)
+        {
           screenX -= cameraSpeed;
+          if (mouseDown) clickOffsetX += cameraSpeed;
+        }
         if (keys.left)
+        {
           screenX += cameraSpeed;
+          if (mouseDown) clickOffsetX -= cameraSpeed;
+        }
         if (keys.up)
+        {
           screenY += cameraSpeed;
+          if (mouseDown) clickOffsetY -= cameraSpeed;
+        }
         if (keys.down)
+        {
           screenY -= cameraSpeed;
+          if (mouseDown) clickOffsetY += cameraSpeed;
+        }
 
         ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
 
@@ -205,8 +222,8 @@ EX:
           for (var j = 0; j < 10; j++)
           {
             var fillType = mapMatrix[i][j].type;
-            xOffset = screenX + (100 * j);
-            yOffset = screenY + (100 * i);
+            var xOffset = screenX + (100 * j);
+            var yOffset = screenY + (100 * i);
 
             switch (fillType)
             {
@@ -248,6 +265,9 @@ EX:
         ctx.fillStyle = "black";
 
         // Draw the highlighting rectangle
+        gameX = mouseX + (-1 * screenX);
+        gameY = mouseY + (-1 * screenY);
+
         if (mouseDown)
         {
           var width = mouseX - mouseClickPos.x;
@@ -255,10 +275,14 @@ EX:
 
           ctx.fillStyle = 'red';
           ctx.globalAlpha = 0.5;
-          ctx.fillRect(mouseClickPos.x, mouseClickPos.y,
-            width, height);
+          ctx.fillRect(mouseClickPos.x - clickOffsetX,
+            mouseClickPos.y - clickOffsetY, width + clickOffsetX,
+            height + clickOffsetY);
           ctx.globalAlpha = 1;
         }
+
+        // Draw mouse cursor
+        ctx.drawImage(Img.cursor, mouseX, mouseY);
 
         drawScore();
 
@@ -273,9 +297,9 @@ EX:
           ctx.fillStyle = 'white';
           ctx.font = "30px Verdana";
           ctx.fillText("X: " + mouseX + " Y: "
-              + mouseY + " screenX: " + screenX
-              + " screenY: " + screenY
-              + " click: " + mouseDown, WIDTH/2 - 350, 30);
+              + mouseY + " clickOffsetX: " + clickOffsetX
+              + " clickOffsetY: " + clickOffsetY
+              + " click: " + mouseDown, WIDTH/2 - 400, 30);
       }
 
     </script>
