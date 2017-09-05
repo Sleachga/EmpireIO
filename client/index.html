@@ -35,7 +35,7 @@ EX:
   <body>
 
     <div id="canvasContainer">
-      <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+      <canvas id="ctx" width="500" height="500"></canvas>
     </div>
 
     </br>
@@ -274,7 +274,7 @@ EX:
           var height = mouseY - mouseClickPos.y;
 
           ctx.fillStyle = 'red';
-          ctx.globalAlpha = 0.5;
+          ctx.globalAlpha = 0.2;
           ctx.fillRect(mouseClickPos.x - clickOffsetX,
             mouseClickPos.y - clickOffsetY, width + clickOffsetX,
             height + clickOffsetY);
