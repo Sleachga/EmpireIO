@@ -45,7 +45,10 @@ EX:
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script src="client/img/images.js"></script>
 
+
     <script>
+
+        document.body.addEventListener('wheel', function(e){ e.preventDefault(); });
 
         // Creates an object for the canvas
         var ctx = document.getElementById("ctx").getContext("2d");
@@ -118,13 +121,32 @@ EX:
           var y = -HEIGHT/2 + event.clientY;
         }
 
+        // Keeps the right click from popping a menu up
+        document.oncontextmenu = function(event)
+        {
+          var evt = new Object({keyCode:93});
+
+          if(event.preventDefault != undefined)
+            event.preventDefault();
+
+          if(event.stopPropagation != undefined)
+            event.stopPropagation();
+        }
+
         document.onmousedown = function(event)
         {
+          var button = event.button;
+
+          if (button === 2)
+            console.log("Mouse Click -> " + button);
+          else if (button === 0)
+            console.log("Mouse Click -> " + button);
+
           mouseDown = true;
           mouseClickPos.x = event.clientX;
           mouseClickPos.y = event.clientY;
 
-          console.log("Click - X: " + mouseClickPos.x
+          console.log("Click -> X: " + mouseClickPos.x
             + " Y: " + mouseClickPos.y);
         }
 

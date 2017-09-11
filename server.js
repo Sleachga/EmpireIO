@@ -116,20 +116,20 @@ var randomizeMap = function()
   console.log("Pre Processed Retval: " + randNum);
 
   /* Sets retval based on randNum
-   * 0 - 60% chance - normal tile
+   * 0 - 70% chance - normal tile
    * 1 - 10% chance - food tile
    * 2 - 10% chance - stone tile
-   * 3 - 10% chance - wood tile
-   * 4 - 10% chance - gold tile
+   * 3 - 5% chance - wood tile
+   * 4 - 5% chance - gold tile
    */
    if (randNum < 70)
      retVal = 0;
    else if (randNum >= 70 && randNum < 80)
      retVal = 1;
    else if (randNum >= 80 && randNum < 90)
-     retVal = 3;
-   else if (randNum >= 90 && randNum < 95)
      retVal = 2;
+   else if (randNum >= 90 && randNum < 95)
+     retVal = 3;
    else
      retVal = 4;
 
