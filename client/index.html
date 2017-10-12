@@ -48,6 +48,7 @@ EX:
 
     <script>
 
+        // Prevents going back or forward a page by two finger swipe
         document.body.addEventListener('wheel', function(e){ e.preventDefault(); });
 
         // Creates an object for the canvas
@@ -87,6 +88,33 @@ EX:
           left: false,
           right: false
         };
+
+        var minimap =
+        {
+          width: WIDTH / 5,
+          height: HEIGHT / 5,
+          x: ((WIDTH / 5) * 4),
+          y: ((HEIGHT / 5) * 4),
+        }
+
+        var drawMiniMap = function()
+        {
+          ctx.globalAlpha = 0.5;
+          ctx.fillStyle = "black";
+          ctx.fillRect(minimap.x, minimap.y, minimap.height, minimap.height);
+          ctx.globalAlpha = 1;
+
+          // // Background Fill
+          // ctx.globalAlpha = 0.5;
+          // ctx.fillStyle = "black";
+          // ctx.fillRect(minimap.x, minimap.y, minimap.width, minimap.height);
+          //
+          // ctx.fillStyle = "white";
+          // ctx.fillRect(minimap.x + 5, minimap.y + 5,
+          //   minimap.width - 20, minimap.height - 20);
+          //
+          // ctx.globalAlpha = 1;
+        }
 
         document.onkeydown = function(event)
         {
@@ -138,9 +166,9 @@ EX:
           var button = event.button;
 
           if (button === 2)
-            console.log("Mouse Click -> " + button);
+            console.log("Right Mouse Click");
           else if (button === 0)
-            console.log("Mouse Click -> " + button);
+            console.log("Left Mouse Click");
 
           mouseDown = true;
           mouseClickPos.x = event.clientX;
@@ -168,6 +196,8 @@ EX:
 
         // Creates the socket.io object
         var socket = io();
+
+        // TODO Declare this without actually having to type it out
 
         // Creates and sets the default for the map matrix
         var mapMatrix = [
@@ -302,6 +332,8 @@ EX:
             height + clickOffsetY);
           ctx.globalAlpha = 1;
         }
+
+        drawMiniMap();
 
         // Draw mouse cursor
         ctx.drawImage(Img.cursor, mouseX, mouseY);
