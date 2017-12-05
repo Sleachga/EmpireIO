@@ -1,4 +1,29 @@
-<!-- TODO:
+<!--
+
+
+
+  ______                    _              _____  ____
+ |  ____|                  (_)            |_   _|/ __ \
+ | |__    _ __ ___   _ __   _  _ __  ___    | | | |  | |
+ |  __|  | '_ ` _ \ | '_ \ | || '__|/ _ \   | | | |  | |
+ | |____ | | | | | || |_) || || |  |  __/  _| |_| |__| |
+ |______||_| |_| |_|| .__/ |_||_|   \___| |_____|\____/
+                    | |
+                    |_|
+
+       |\   ,____
+       |\   \/   `.
+       \ `-.:.     `\
+        `-.__ `\=====|
+           /=`'/   ^_\
+         .'   /\   .=)
+      .-'  .'|  '-(/_|
+    .'  __(  \  .'`
+   /_.'`  `.  |`
+            \ |
+             |/
+
+TODO:
 
 Canvas onLeftClick highlights a region and commands
 all units in that area.  Add a goto point function
@@ -26,311 +51,297 @@ EX:
 -->
 
 <html>
-  <head>
+<head>
     <title>Empire IO</title>
-    <link rel="icon" href="client/img/favicon.ico"/>
-    <link rel="stylesheet" href="client/index.css"/>
-  </head>
+    <link rel="icon" href="/client/img/favicon.ico"/>
+    <link rel="stylesheet" href="/client/index.css"/>
+</head>
 
-  <body>
+<body>
 
-    <div id="canvasContainer">
-      <canvas id="ctx" width="500" height="500"></canvas>
-    </div>
+<div id="canvasContainer">
+    <canvas id="ctx" width="500" height="500"></canvas>
+</div>
 
-    </br>
+<br>
 
-    <button id="mapRandButton">Randomize Map</button>
+<button id="mapRandButton">Randomize Map</button>
 
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-    <script src="client/img/images.js"></script>
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script src="/client/img/images.js"></script>
 
 
-    <script>
+<script>
+    var DEBUG = false;
 
-        // Prevents going back or forward a page by two finger swipe
-        document.body.addEventListener('wheel', function(e){ e.preventDefault(); });
+    // Prevents going back or forward a page by two finger swipe
+    document.body.addEventListener('wheel', function (e)
+    {
+        e.preventDefault();
+    });
 
-        // Creates an object for the canvas
-        var ctx = document.getElementById("ctx").getContext("2d");
+    // Creates an object for the canvas
+    var ctx = document.getElementById("ctx").getContext("2d");
 
-        ctx.canvas.width = window.innerWidth - 20;
-        ctx.canvas.height = window.innerHeight - 20;
-        ctx.font = '30px Arial';
+    ctx.canvas.width = window.innerWidth - 20;
+    ctx.canvas.height = window.innerHeight - 20;
+    ctx.font = '30px Arial';
 
-        var gameX = 0;
-        var gameY = 0;
+    var gameX = 0;
+    var gameY = 0;
 
-        var mouseX = 0;
-        var mouseY = 0;
-        var mouseDown = false;
-        var mouseClickPos =
+    var mouseX = 0;
+    var mouseY = 0;
+    var mouseDown = false;
+    var mouseClickPos =
         {
-          x: 0,
-          y: 0
-        }
-
-        var clickOffsetX = 0;
-        var clickOffsetY = 0;
-
-        var unitList;
-
-        var WIDTH = window.innerWidth;
-        var HEIGHT = window.innerHeight;
-        var screenX = 0;
-        var screenY = 0;
-        var cameraSpeed = 3;
-        var angle = 0;
-        var keys =
-        {
-          up: false,
-          down: false,
-          left: false,
-          right: false
+            x: 0,
+            y: 0
         };
 
-        var minimap =
-        {
-          width: WIDTH / 5,
-          height: HEIGHT / 5,
-          x: ((WIDTH / 5) * 4),
-          y: ((HEIGHT / 5) * 4),
-        }
+    var clickOffsetX = 0;
+    var clickOffsetY = 0;
 
-        var drawMiniMap = function()
-        {
-          ctx.globalAlpha = 0.5;
-          ctx.fillStyle = "black";
-          ctx.fillRect(minimap.x, minimap.y, minimap.height, minimap.height);
-          ctx.globalAlpha = 1;
+    var unitList;
 
-          // // Background Fill
-          // ctx.globalAlpha = 0.5;
-          // ctx.fillStyle = "black";
-          // ctx.fillRect(minimap.x, minimap.y, minimap.width, minimap.height);
-          //
-          // ctx.fillStyle = "white";
-          // ctx.fillRect(minimap.x + 5, minimap.y + 5,
-          //   minimap.width - 20, minimap.height - 20);
-          //
-          // ctx.globalAlpha = 1;
-        }
-
-        document.onkeydown = function(event)
+    var WIDTH = window.innerWidth;
+    var HEIGHT = window.innerHeight;
+    var screenX = 0;
+    var screenY = 0;
+    var cameraSpeed = 3;
+    var keys =
         {
-            if(event.keyCode === 68) //d
-              keys.right = true;
-            else if(event.keyCode === 65) //a
-              keys.left = true;
-            else if(event.keyCode === 83) //s
-              keys.down = true;
-            else if(event.keyCode === 87) //w
-              keys.up = true;
+            up: false,
+            down: false,
+            left: false,
+            right: false
         };
 
-        document.onkeyup = function(event)
+    var minimap =
         {
-            if(event.keyCode === 68) //d
-              keys.right = false;
-            else if(event.keyCode === 65) //a
-              keys.left = false;
-            else if(event.keyCode === 83) //s
-              keys.down = false;
-            else if(event.keyCode === 87) //w
-              keys.up = false;
+            width: WIDTH / 5,
+            height: HEIGHT / 5,
+            x: ((WIDTH / 5) * 4),
+            y: ((HEIGHT / 5) * 4)
         };
 
-        document.onmousemove = function(event)
-        {
-          // Set global mouseX and mouseY variables
-          mouseX = event.clientX;
-          mouseY = event.clientY;
-          var x = -WIDTH/2 + event.clientX;
-          var y = -HEIGHT/2 + event.clientY;
-        }
+    var drawMiniMap = function ()
+    {
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = "black";
+        ctx.fillRect(minimap.x, minimap.y, minimap.height, minimap.height);
+        ctx.globalAlpha = 1;
+    };
 
-        // Keeps the right click from popping a menu up
-        document.oncontextmenu = function(event)
-        {
-          var evt = new Object({keyCode:93});
+    document.onkeydown = function (event)
+    {
+        if (event.keyCode === 68) //d
+            keys.right = true;
+        else if (event.keyCode === 65) //a
+            keys.left = true;
+        else if (event.keyCode === 83) //s
+            keys.down = true;
+        else if (event.keyCode === 87) //w
+            keys.up = true;
+    };
 
-          if(event.preventDefault != undefined)
+    document.onkeyup = function (event)
+    {
+        if (event.keyCode === 68) //d
+            keys.right = false;
+        else if (event.keyCode === 65) //a
+            keys.left = false;
+        else if (event.keyCode === 83) //s
+            keys.down = false;
+        else if (event.keyCode === 87) //w
+            keys.up = false;
+    };
+
+    document.onmousemove = function (event)
+    {
+        // Set global mouseX and mouseY variables
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+    };
+
+    // Keeps the right click from popping a menu up
+    document.oncontextmenu = function (event)
+    {
+        var evt = new Object({keyCode: 93});
+
+        if (event.preventDefault !== undefined)
             event.preventDefault();
 
-          if(event.stopPropagation != undefined)
+        if (event.stopPropagation !== undefined)
             event.stopPropagation();
-        }
+    };
 
-        document.onmousedown = function(event)
-        {
-          var button = event.button;
+    document.onmousedown = function (event)
+    {
+        var button = event.button;
 
-          if (button === 2)
-            console.log("Right Mouse Click");
-          else if (button === 0)
-            console.log("Left Mouse Click");
+        if (button === 2)
+            if (DEBUG) console.log("Right Mouse Click");
+        else if (button === 0)
+            if (DEBUG) console.log("Left Mouse Click");
 
-          mouseDown = true;
-          mouseClickPos.x = event.clientX;
-          mouseClickPos.y = event.clientY;
+        mouseDown = true;
+        mouseClickPos.x = event.clientX;
+        mouseClickPos.y = event.clientY;
 
-          console.log("Click -> X: " + mouseClickPos.x
+        if (DEBUG) console.log("Click -> X: " + mouseClickPos.x
             + " Y: " + mouseClickPos.y);
-        }
+    };
 
-        document.onmouseup = function(event)
+    document.onmouseup = function (event)
+    {
+        mouseDown = false;
+        clickOffsetX = 0;
+        clickOffsetY = 0;
+    };
+
+    // Creates an object for the randomize map button
+    var mapRand = document.getElementById('mapRandButton');
+
+    // Calls a function to reset the map grid on button click
+    mapRand.onclick = function ()
+    {
+        socket.emit('mapRand');
+    };
+
+    // Creates the socket.io object
+    var socket = io();
+
+    // TODO Declare this without actually having to type it out
+
+    // Creates and sets the default for the map matrix
+    var mapMatrix = [
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 1
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 2
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 3
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 4
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 5
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 6
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 7
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 8
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 9
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // 10
+    ];
+
+    // Initially sets the map grid
+    socket.on('mapInit', function (data)
+    {
+        var mapGrid = data;
+
+        // Convert into multi-demensional array
+        var counter = 0;
+
+        for (var i = 0; i < 10; i++)
         {
-          mouseDown = false;
-          clickOffsetX = 0;
-          clickOffsetY = 0;
-        }
-
-        // Creates an object for the randomize map button
-        var mapRand = document.getElementById('mapRandButton');
-
-        // Calls a function to reset the map grid on button click
-        mapRand.onclick = function()
-        {
-          socket.emit('mapRand');
-        }
-
-        // Creates the socket.io object
-        var socket = io();
-
-        // TODO Declare this without actually having to type it out
-
-        // Creates and sets the default for the map matrix
-        var mapMatrix = [
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 1
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 2
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 3
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 4
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 5
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 6
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 7
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 8
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 9
-            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // 10
-        ];
-
-        // Initially sets the map grid
-        socket.on('mapInit', function(data)
-        {
-            var mapGrid = data;
-
-            // Convert into multi-demensional array
-            var counter = 0;
-
-            for (var i = 0; i < 10; i++)
+            for (var j = 0; j < 10; j++)
             {
-              for (var j = 0; j < 10; j++)
-              {
-                console.log(mapGrid[counter]);
+                if (DEBUG) console.log(mapGrid[counter]);
                 mapMatrix[i][j] = mapGrid[counter++];
-              }
             }
-        });
+        }
+    });
 
-        var unitListPosted = false;
+    // Sets the map grid on update (25 times a second)
+    socket.on('update', function (data)
+    {
+        unitList = data;
+    });
 
-        // Sets the map grid on update (25 times a second)
-        socket.on('update', function(data)
-        {
-          unitList = data;
-      });
-
-      /*
-        Essentially the main loop, game logic and canvas drawing
-        Goes on here
-      */
-      setInterval(function()
-      {
+    /*
+      Essentially the main loop, game logic and canvas drawing
+      Goes on here
+    */
+    setInterval(function ()
+    {
         if (keys.right)
         {
-          screenX -= cameraSpeed;
-          if (mouseDown) clickOffsetX += cameraSpeed;
+            screenX -= cameraSpeed;
+            if (mouseDown) clickOffsetX += cameraSpeed;
         }
         if (keys.left)
         {
-          screenX += cameraSpeed;
-          if (mouseDown) clickOffsetX -= cameraSpeed;
+            screenX += cameraSpeed;
+            if (mouseDown) clickOffsetX -= cameraSpeed;
         }
         if (keys.up)
         {
-          screenY += cameraSpeed;
-          if (mouseDown) clickOffsetY -= cameraSpeed;
+            screenY += cameraSpeed;
+            if (mouseDown) clickOffsetY -= cameraSpeed;
         }
         if (keys.down)
         {
-          screenY -= cameraSpeed;
-          if (mouseDown) clickOffsetY += cameraSpeed;
+            screenY -= cameraSpeed;
+            if (mouseDown) clickOffsetY += cameraSpeed;
         }
 
-        ctx.clearRect(0,0, ctx.canvas.width, ctx.canvas.height);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         // Reads the Map Matrix and colors the tiles accordingly
         for (var i = 0; i < 10; i++)
         {
-          for (var j = 0; j < 10; j++)
-          {
-            var fillType = mapMatrix[i][j].type;
-            var xOffset = screenX + (100 * j);
-            var yOffset = screenY + (100 * i);
-
-            switch (fillType)
+            for (var j = 0; j < 10; j++)
             {
-              case 1:
-                ctx.drawImage(Img.foodTile1, xOffset, yOffset);
-                break;
+                var fillType = mapMatrix[i][j].type;
+                var xOffset = screenX + (100 * j);
+                var yOffset = screenY + (100 * i);
 
-              case 2:
-                ctx.drawImage(Img.stoneTile1, xOffset, yOffset);
-                break;
+                switch (fillType)
+                {
+                    case 1:
+                        ctx.drawImage(Img.foodTile1, xOffset, yOffset);
+                        break;
 
-              case 3:
-                ctx.drawImage(Img.forestTile1, xOffset, yOffset);
-                break;
+                    case 2:
+                        ctx.drawImage(Img.stoneTile1, xOffset, yOffset);
+                        break;
 
-              case 4:
-                ctx.drawImage(Img.goldTile1, xOffset, yOffset);
-                break;
+                    case 3:
+                        ctx.drawImage(Img.forestTile1, xOffset, yOffset);
+                        break;
 
-              default:
-                ctx.fillStyle = 'white';
-                ctx.fillRect(xOffset, yOffset, 100, 100);
+                    case 4:
+                        ctx.drawImage(Img.goldTile1, xOffset, yOffset);
+                        break;
+
+                    default:
+                        ctx.fillStyle = 'white';
+                        ctx.fillRect(xOffset, yOffset, 100, 100);
+                }
             }
-          }
         }
         // TODO Function to check where the mouse is (highlight tile)
 
         // Set and draw units
-
         if (unitList)
         {
-          for (var i = 0; i < unitList.length; i++)
-          {
-            var unit = unitList[i];
-            ctx.drawImage(Img.unit, screenX + unit.x, screenY + unit.y);
-          }
+            for (var i = 0; i < unitList.length; i++)
+            {
+                var unit = unitList[i];
+                ctx.drawImage(Img.unit, screenX + unit.x, screenY + unit.y);
+            }
         }
 
         ctx.fillStyle = "black";
 
-        // Draw the highlighting rectangle
         gameX = mouseX + (-1 * screenX);
         gameY = mouseY + (-1 * screenY);
 
         if (mouseDown)
         {
-          var width = mouseX - mouseClickPos.x;
-          var height = mouseY - mouseClickPos.y;
+            var width = mouseX - mouseClickPos.x;
+            var height = mouseY - mouseClickPos.y;
 
-          ctx.fillStyle = 'red';
-          ctx.globalAlpha = 0.2;
-          ctx.fillRect(mouseClickPos.x - clickOffsetX,
-            mouseClickPos.y - clickOffsetY, width + clickOffsetX,
-            height + clickOffsetY);
-          ctx.globalAlpha = 1;
+            ctx.fillStyle = 'red';
+            ctx.globalAlpha = 0.2;
+            ctx.fillRect(mouseClickPos.x - clickOffsetX,
+                mouseClickPos.y - clickOffsetY, width + clickOffsetX,
+                height + clickOffsetY);
+            ctx.globalAlpha = 1;
         }
 
         drawMiniMap();
@@ -339,26 +350,22 @@ EX:
         ctx.drawImage(Img.cursor, mouseX, mouseY);
 
         drawScore();
+    }, 40);
 
-      }, 40);
+    var drawScore = function ()
+    {
+        ctx.fillStyle = 'black';
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(0, 0, WIDTH, 40);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'white';
+        ctx.font = "30px Verdana";
+        ctx.fillText("X: " + mouseX + " Y: "
+            + mouseY + " clickOffsetX: " + clickOffsetX
+            + " clickOffsetY: " + clickOffsetY
+            + " click: " + mouseDown, WIDTH / 2 - 400, 30);
+    }
 
-      var drawScore = function()
-      {
-          ctx.fillStyle = 'black';
-          ctx.globalAlpha = 0.5;
-          ctx.fillRect(0, 0, WIDTH, 40);
-          ctx.globalAlpha = 1;
-          ctx.fillStyle = 'white';
-          ctx.font = "30px Verdana";
-          ctx.fillText("X: " + mouseX + " Y: "
-              + mouseY + " clickOffsetX: " + clickOffsetX
-              + " clickOffsetY: " + clickOffsetY
-              + " click: " + mouseDown, WIDTH/2 - 400, 30);
-      }
-
-    </script>
-
-    <p></p>
-
-    </body>
+</script>
+</body>
 </html>

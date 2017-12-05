@@ -1,31 +1,25 @@
-
-*
-{
-  margin: 0;
-  padding: 0;
+* {
+    margin: 0;
+    padding: 0;
 }
 
-html
-{
-  overflow: hidden;
-  height: 100%;
+html {
+    overflow: hidden;
+    height: 100%;
 }
 
-body
-{
-  height: 100%;
-  overflow: auto;
+body {
+    height: 100%;
+    overflow: auto;
 }
 
-#ctx
-{
-    position:absolute;
+#ctx {
+    position: absolute;
     width: 100%;
     height: 100%;
     cursor: none;
 }
 
-#mapRandButton
-{
-  display: none;
+#mapRandButton {
+    display: none;
 }

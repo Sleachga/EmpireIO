@@ -1,5 +1,7 @@
-// Object containing the map grid (0-25)
+// Object containing the map grid
 var mapGrid = {};
+
+var DEBUG = false;
 
 // Default for Map Cells
 var mapCell = function(id, type)
@@ -8,8 +10,8 @@ var mapCell = function(id, type)
   self.id = id;
   self.type = type;
   mapGrid[id] = self;
-  console.log("Map cell " + mapGrid[id].id + " is value " + mapGrid[id].type);
-}
+  if (DEBUG) console.log("Map cell " + mapGrid[id].id + " is value " + mapGrid[id].type);
+};
 
 // Randomizes the map
 var randomizeMap = function()
@@ -18,7 +20,7 @@ var randomizeMap = function()
 
   // Pick a random number 0-99
   var randNum = Math.floor(100 * Math.random());
-  console.log("Pre Processed Retval: " + randNum);
+  if (DEBUG) console.log("Pre Processed Retval: " + randNum);
 
   /* Sets retval based on randNum
    * 0 - 70% chance - normal tile
@@ -28,25 +30,16 @@ var randomizeMap = function()
    * 4 - 5% chance - gold tile
    */
   if (randNum < 70)
-  {
     retVal = 0;
-  }
   else if (randNum >= 70 && randNum < 80)
-  {
     retVal = 1;
-  }
   else if (randNum >= 80 && randNum < 90)
-  {
     retVal = 3;
-  }
   else if (randNum >= 90 && randNum < 95)
-  {
     retVal = 2;
-  }
-  else {
+  else
     retVal = 4;
-  }
 
-  console.log("Post Processed Retval: " + retVal);
+  if (DEBUG) console.log("Post Processed Retval: " + retVal);
   return retVal;
-}
+};

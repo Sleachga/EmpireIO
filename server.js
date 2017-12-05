@@ -1,21 +1,3 @@
-/*
-  TODO:
-
-  1. When a unit moves to a point, check what
-  cell the point is in and add it to that array
-
-  2. Move the units to specific points on the
-  tile that look good (maybe 5 spots?).
-
-  3. If you exceed the number of spots it will just
-  repeat spots visually and show the number of units
-  in the middle of the cell (maybe 1 for regular & 1
-  for combat)
-
-  4. Draw each tile differently based on how many
-  units are in the cell
-*/
-
 var DEBUG = true;
 
 var express = require('express');
@@ -32,7 +14,7 @@ app.get('/',function(req, res)
 app.use('/client',express.static(__dirname + '/client'));
 
 serv.listen(process.env.PORT || 2000);
-console.log("Server started.");
+if (DEBUG) console.log("Server started.");
 
 // server.js
 // const UNIT_JS = require('./unit.js');
@@ -43,12 +25,10 @@ var serverReady = false;
 // Default initialization function for all objects
 var Entity = function()
 {
-    var self =
-    {
+    return {
         id: "",
-        type: 0,
-    }
-    return self;
+        type: 0
+    };
 };
 
 // Object containing all units on the server
@@ -60,15 +40,15 @@ var unit = function(x, y, id, type)
     var self =
     {
         id: "",
-        type: 0,
-    }
+        type: 0
+    };
 
     self.id = id;
     self.type = type;
     self.x = x;
     self.y = y;
     unitList[id] = self;
-    console.log("Unit " + unitList[id].id
+    if (DEBUG) console.log("Unit " + unitList[id].id
       + " created at " + x + ", " + y
       + " of type " + type);
 };
@@ -83,13 +63,13 @@ var mapCell = function(id, type)
   self.id = id;
   self.type = type;
   mapGrid[id] = self;
-  console.log("Map cell " + mapGrid[id].id + " is value " + mapGrid[id].type);
+  if (DEBUG) console.log("Map cell " + mapGrid[id].id + " is value " + mapGrid[id].type);
 };
 
 // Called as soon as the server starts
 var serverStart = function()
 {
-  console.log("Rendering Map...");
+  if (DEBUG) console.log("Rendering Map...");
   for (var i = 0; i < 100; i++)
   {
     var cell = mapCell(i, randomizeMap());
@@ -97,13 +77,10 @@ var serverStart = function()
 
   serverReady = true;
 
+  // TEST OUT UNITS
   if (DEBUG)
-  {
     for (var i = 0; i < 5; i++)
-    {
       var testUnits = unit(i * 110, i * 120, i, "normal");
-    }
-  }
 };
 
 // Randomizes the map
@@ -113,7 +90,7 @@ var randomizeMap = function()
 
   // Pick a random number 0-99
   var randNum = Math.floor(100 * Math.random());
-  console.log("Pre Processed Retval: " + randNum);
+  if (DEBUG) console.log("Pre Processed Retval: " + randNum);
 
   /* Sets retval based on randNum
    * 0 - 70% chance - normal tile
@@ -133,7 +110,7 @@ var randomizeMap = function()
    else
      retVal = 4;
 
-  console.log("Post Processed Retval: " + retVal);
+    if (DEBUG) console.log("Post Processed Retval: " + retVal);
   return retVal;
 };
 
@@ -177,12 +154,9 @@ io.sockets.on('connection', function(socket)
 // Main loop function, runs 25 times a second
 setInterval(function()
 {
-    var pack = unitList;
-
     for(var i in SOCKET_LIST)
     {
         var socket = SOCKET_LIST[i];
-        socket.emit('update', pack);
+        socket.emit('update', unitList);
     }
-
 },40);
