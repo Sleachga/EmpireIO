@@ -16,10 +16,6 @@ app.use('/client',express.static(__dirname + '/client'));
 serv.listen(process.env.PORT || 2000);
 if (DEBUG) console.log("Server started.");
 
-// server.js
-// const UNIT_JS = require('./unit.js');
-// let unit = UNIT_JS.unit(25, 25, 100, 100);
-
 var serverReady = false;
 
 // Default initialization function for all objects
@@ -54,7 +50,7 @@ var unit = function(x, y, id, type)
 };
 
 // Object containing the map grid (0-25)
-var mapGrid = [];
+var mapGrid = new Array(10000);
 
 // Default for Map Cells
 var mapCell = function(id, type)
@@ -70,10 +66,8 @@ var mapCell = function(id, type)
 var serverStart = function()
 {
   if (DEBUG) console.log("Rendering Map...");
-  for (var i = 0; i < 100; i++)
-  {
+  for (var i = 0; i < mapGrid.length; i++)
     var cell = mapCell(i, randomizeMap());
-  }
 
   serverReady = true;
 

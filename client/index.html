@@ -18,31 +18,6 @@
    /_.'`  `.  |`
             \ |
              |/
-TODO:
-
-Canvas onLeftClick highlights a region and commands
-all units in that area.  Add a goto point function
-
-Canvas onRightClick makes a menu similar to paragon,
-highlights the button its over and gives you the
-option to create units
-
-Add mini map, maybe make it a popup menu when you
-hold down q
-
-https://www.kirupa.com/html5/getting_mouse_click_position.htm
-
-When you move multiple units to one spot put them randomly in a circle
-with a certain radius around the point clicked
-
-EX:
-
-             point ~~~>     *
-
-                           ___
-                         /     \
-    finishing area ~~~>  |  *  |
-                         \_____/
 -->
 
 <html>
@@ -204,21 +179,11 @@ EX:
     // Creates the socket.io object
     var socket = io();
 
-    // TODO Declare this without actually having to type it out
-
-    // Creates and sets the default for the map matrix
-    var mapMatrix = [
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 1
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 2
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 3
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 4
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 5
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 6
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 7
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 8
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], // 9
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  // 10
-    ];
+    // Create Map Matrix Grid
+    var sizeOfMapMatrix = 100; // Amount of rows and columns in grid
+    var mapMatrix = new Array(sizeOfMapMatrix);
+    for (var i = 0; i < sizeOfMapMatrix; i++)
+        mapMatrix[i] = new Array(sizeOfMapMatrix);
 
     // Initially sets the map grid
     socket.on('mapInit', function (data)
@@ -228,9 +193,9 @@ EX:
         // Convert into 2d array
         var counter = 0;
 
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < mapMatrix.length; i++)
         {
-            for (var j = 0; j < 10; j++)
+            for (var j = 0; j < mapMatrix[i].length; j++)
             {
                 if (DEBUG) console.log(mapGrid[counter]);
                 mapMatrix[i][j] = mapGrid[counter++];
@@ -274,9 +239,9 @@ EX:
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
         // Reads the Map Matrix and colors the tiles accordingly
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < sizeOfMapMatrix; i++)
         {
-            for (var j = 0; j < 10; j++)
+            for (var j = 0; j < sizeOfMapMatrix; j++)
             {
                 var fillType = mapMatrix[i][j].type;
                 var xOffset = screenX + (100 * j);

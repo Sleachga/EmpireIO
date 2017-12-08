@@ -1,0 +1,25 @@
+TODO:
+
+Canvas onLeftClick highlights a region and commands
+all units in that area.  Add a goto point function
+
+Canvas onRightClick makes a menu similar to paragon,
+highlights the button its over and gives you the
+option to create units
+
+Add mini map, maybe make it a popup menu when you
+hold down q
+
+https://www.kirupa.com/html5/getting_mouse_click_position.htm
+
+When you move multiple units to one spot put them randomly in a circle
+with a certain radius around the point clicked
+
+EX:
+
+             point ~~~>     *
+
+                           ___
+                         /     \
+    finishing area ~~~>  |  *  |
+                         \_____/
