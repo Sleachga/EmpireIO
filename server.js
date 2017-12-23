@@ -5,8 +5,7 @@ var app = express();
 var serv = require('http').Server(app);
 
 // Tells the server where the html file is
-app.get('/',function(req, res)
-{
+app.get('/',function(req, res) {
     res.sendFile(__dirname + '/client/index.html');
 });
 
@@ -43,6 +42,7 @@ var unit = function(x, y, id, type)
     self.type = type;
     self.x = x;
     self.y = y;
+
     unitList[id] = self;
     if (DEBUG) console.log("Unit " + unitList[id].id
       + " created at " + x + ", " + y
@@ -65,16 +65,24 @@ var mapCell = function(id, type)
 // Called as soon as the server starts
 var serverStart = function()
 {
+  var i;
+
   if (DEBUG) console.log("Rendering Map...");
-  for (var i = 0; i < mapGrid.length; i++)
-    var cell = mapCell(i, randomizeMap());
+      for (i = 0; i < mapGrid.length; i++)
+          var cell = mapCell(i, randomizeMap());
 
   serverReady = true;
 
   // TEST OUT UNITS
   if (DEBUG)
-    for (var i = 0; i < 5; i++)
-      var testUnits = unit(i * 110, i * 120, i, "normal");
+    for (i = 0; i < 10; i++)
+      var testUnits = unit(i * 100, i * 100, i, "normal");
+
+  for (i = 0; i < unitList.length; i++)
+  {
+      unitList[i].selected = false;
+      console.log("Unit list " + i + " is selected: " + unitList[i].selected);
+  }
 };
 
 // Randomizes the map
@@ -119,23 +127,11 @@ io.sockets.on('connection', function(socket)
 {
     // Send Init Pack (Map and objects on it)
     socket.emit('mapInit', mapGrid);
+    socket.emit('unitInit', unitList);
 
     // Sets the user ID to a random number
     socket.id = Math.random();
-    socket.x = 0;
-    socket.y = 0;
-    socket.number = "" + Math.floor(10 * Math.random());
     SOCKET_LIST[socket.id] = socket;
-
-    // Fires when 'mapRand' is recieved from the socket
-    // Randomizes the map with serverStart()
-    // Emits a 'mapInit' to the socket with the updated mapGrid
-    socket.on('mapRand', function()
-    {
-        console.log("BUTTON PUSHED");
-        serverStart();
-        socket.emit('mapInit', mapGrid);
-    });
 
     // Fires when someone leaves the page
     // Deletes the socket from SOCKET_LIST

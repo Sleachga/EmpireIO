@@ -33,3 +33,6 @@ Img.grass.src = 'client/img/grass.png';
 
 Img.unit = new Image();
 Img.unit.src = 'client/img/person.png';
+
+Img.unit_selected = new Image();
+Img.unit_selected.src = 'client/img/person_selected.png';

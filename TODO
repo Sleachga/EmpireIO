@@ -15,6 +15,13 @@ https://www.kirupa.com/html5/getting_mouse_click_position.htm
 When you move multiple units to one spot put them randomly in a circle
 with a certain radius around the point clicked
 
+
+IMPORTANT
+
+Give userID when user logs in and make units bind to a user ID
+onRight Click creates a unit
+
+
 EX:
 
              point ~~~>     *

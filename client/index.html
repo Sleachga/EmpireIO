@@ -8,10 +8,10 @@
                     | |
                     |_|
        |\   ,____
-       |\   \/   `.
+       | \  \/   `.
        \ `-.:.     `\
-        `-.__ `\=====|
-           /=`'/   ^_\
+        `-.__ `\=====|   Hey there! Fork me at https://github.com/Sleachga/EmpireIO
+           /=`'/   ^_\  /
          .'   /\   .=)
       .-'  .'|  '-(/_|
     .'  __(  \  .'`
@@ -35,20 +35,14 @@
 
 <br>
 
-<button id="mapRandButton">Randomize Map</button>
-
 <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 <script src="/client/img/images.js"></script>
-
 
 <script>
     var DEBUG = false;
 
     // Prevents going back or forward a page by two finger swipe
-    document.body.addEventListener('wheel', function (e)
-    {
-        e.preventDefault();
-    });
+    document.body.addEventListener('wheel', function (e) { e.preventDefault();});
 
     // Creates an object for the canvas
     var ctx = document.getElementById("ctx").getContext("2d");
@@ -60,16 +54,18 @@
     var mouseX = 0; // X coordinate of mouse
     var mouseY = 0; // Y coordinate of mouse
     var mouseDown = false;
-    var mouseClickPos = // Position of last mouseclick
-        {
-            x: 0,
-            y: 0
-        };
+    var mouseClickPos = { x: 0, y: 0 }; // Position of last mouseclick
 
-    var clickOffsetX = 0; // Amount camera has moved horizontally since click
-    var clickOffsetY = 0; // Amount camera has moved vertically since click
+    var keyOffsetX = 0; // Amount camera has moved horizontally since click via keys
+    var keyOffsetY = 0; // Amount camera has moved vertically since click via keys
 
-    var unitList; // Object containing all units
+    var mouseXBeforeClick = 0;
+    var mouseYBeforeClick = 0;
+    var mouseXAfterClick = 0;
+    var mouseYAfterClick = 0;
+
+    var unitList = []; // Array containing all units
+    var selectedUnitList = []; // Array containing selected units
 
     var WIDTH = window.innerWidth; // Width of browser window at gameload
     var HEIGHT = window.innerHeight; // Height of browser window at gameload
@@ -132,15 +128,10 @@
     };
 
     // Keeps the right click from popping a menu up
-    document.oncontextmenu = function (event)
+    document.oncontextmenu = function(event)
     {
-        var evt = new Object({keyCode: 93});
-
-        if (event.preventDefault !== undefined)
-            event.preventDefault();
-
-        if (event.stopPropagation !== undefined)
-            event.stopPropagation();
+        if (event.preventDefault !== undefined) event.preventDefault();
+        if (event.stopPropagation !== undefined) event.stopPropagation();
     };
 
     document.onmousedown = function (event) // Mouse click down listener
@@ -156,24 +147,64 @@
         mouseClickPos.x = event.clientX;
         mouseClickPos.y = event.clientY;
 
+        // Reset selected units
+        for (var i = 0; i < selectedUnitList.length; i++)
+            unitList[selectedUnitList[i]].selected = false;
+
+        selectedUnitList = [];
+
+        // Get REAL position
+        mouseXBeforeClick = event.clientX - screenX;
+        mouseYBeforeClick = event.clientY - screenY;
+
         if (DEBUG) console.log("Click -> X: " + mouseClickPos.x
             + " Y: " + mouseClickPos.y);
     };
 
-    document.onmouseup = function (event) // Mouse click up listener
+    document.onmouseup = function(event) // Mouse click up listener
     {
         mouseDown = false;
-        clickOffsetX = 0;
-        clickOffsetY = 0;
-    };
+        keyOffsetX = 0;
+        keyOffsetY = 0;
 
-    // Creates an object for the randomize map button
-    var mapRand = document.getElementById('mapRandButton');
+        // Get REAL position
+        mouseXAfterClick = event.clientX - screenX;
+        mouseYAfterClick = event.clientY - screenY;
 
-    // Calls a function to reset the map grid on button click
-    mapRand.onclick = function ()
-    {
-        socket.emit('mapRand');
+        // Sort coordinates to get top left and bottom right every time
+        var left, right, top, bottom;
+
+        if (mouseXBeforeClick > mouseXAfterClick)
+        {
+            left = mouseXAfterClick;
+            right = mouseXBeforeClick;
+        }
+        else
+        {
+            left = mouseXBeforeClick;
+            right = mouseXAfterClick;
+        }
+
+        if (mouseYBeforeClick > mouseYAfterClick)
+        {
+            top = mouseYAfterClick;
+            bottom = mouseYBeforeClick;
+        }
+        else
+        {
+            top = mouseYBeforeClick;
+            bottom = mouseYAfterClick;
+        }
+
+        // Check if clicked on any units OR highlighted any units in area
+        for (var i = 0; i < unitList.length; i++)
+            if ((left >= unitList[i].x && left <= unitList[i].x + Img.unit.width) && (top >= unitList[i].y
+                && top <= unitList[i].y + Img.unit.height) || ((unitList[i].x >= left && unitList[i].x <= right)
+                && (unitList[i].y >= top && unitList[i].y <= bottom)))
+            {
+                selectedUnitList.push(i);
+                unitList[i].selected = true;
+            }
     };
 
     // Creates the socket.io object
@@ -203,10 +234,20 @@
         }
     });
 
+    socket.on('unitInit', function(data)
+    {
+        unitList = data;
+    });
+
+
     // Sets the map grid on update (25 times a second)
     socket.on('update', function (data)
     {
-        unitList = data;
+        for (var i = 0; i < data.length; i++)
+        {
+            unitList[i].x = data[i].x;
+            unitList[i].y = data[i].y;
+        }
     });
 
     /*
@@ -218,28 +259,30 @@
         if (keys.right)
         {
             screenX -= cameraSpeed; // Move camera right
-            if (mouseDown) clickOffsetX += cameraSpeed;
+            if (mouseDown) keyOffsetX += cameraSpeed;
         }
         if (keys.left)
         {
             screenX += cameraSpeed; // Move camera left
-            if (mouseDown) clickOffsetX -= cameraSpeed;
+            if (mouseDown) keyOffsetX -= cameraSpeed;
         }
         if (keys.up)
         {
             screenY += cameraSpeed; // Move camera up
-            if (mouseDown) clickOffsetY -= cameraSpeed;
+            if (mouseDown) keyOffsetY -= cameraSpeed;
         }
         if (keys.down)
         {
             screenY -= cameraSpeed; // Move camera down
-            if (mouseDown) clickOffsetY += cameraSpeed;
+            if (mouseDown) keyOffsetY += cameraSpeed;
         }
 
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+        var i; // iterator
+
         // Reads the Map Matrix and colors the tiles accordingly
-        for (var i = 0; i < sizeOfMapMatrix; i++)
+        for (i = 0; i < sizeOfMapMatrix; i++)
         {
             for (var j = 0; j < sizeOfMapMatrix; j++)
             {
@@ -276,10 +319,12 @@
         // Set and draw units
         if (unitList)
         {
-            for (var i = 0; i < unitList.length; i++)
+            for (i = 0; i < unitList.length; i++)
             {
                 var unit = unitList[i];
-                ctx.drawImage(Img.unit, screenX + unit.x, screenY + unit.y);
+
+                if (unit.selected) ctx.drawImage(Img.unit_selected, screenX + unit.x, screenY + unit.y);
+                else ctx.drawImage(Img.unit, screenX + unit.x, screenY + unit.y);
             }
         }
 
@@ -292,9 +337,9 @@
 
             ctx.fillStyle = 'red';
             ctx.globalAlpha = 0.2;
-            ctx.fillRect(mouseClickPos.x - clickOffsetX,
-                mouseClickPos.y - clickOffsetY, width + clickOffsetX,
-                height + clickOffsetY);
+            ctx.fillRect(mouseClickPos.x - keyOffsetX,
+                mouseClickPos.y - keyOffsetY, width + keyOffsetX,
+                height + keyOffsetY);
             ctx.globalAlpha = 1;
         }
 
@@ -316,8 +361,8 @@
         ctx.fillStyle = 'white';
         ctx.font = "30px Verdana";
         ctx.fillText("X: " + mouseX + " Y: "
-            + mouseY + " clickOffsetX: " + clickOffsetX
-            + " clickOffsetY: " + clickOffsetY
+            + mouseY + " FirstClickX: " + mouseXBeforeClick
+            + " FirstClickY: " + mouseYBeforeClick
             + " click: " + mouseDown, WIDTH / 2 - 400, 30);
     }
 
