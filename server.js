@@ -28,6 +28,7 @@ var Entity = function()
 
 // Object containing all units on the server
 var unitList = [];
+var unitCounter = 0;
 
 // Constructor for unit
 var unit = function(x, y, id, type)
@@ -75,8 +76,8 @@ var serverStart = function()
 
   // TEST OUT UNITS
   if (DEBUG)
-    for (i = 0; i < 10; i++)
-      var testUnits = unit(i * 100, i * 100, i, "normal");
+    for (unitCounter = 0; unitCounter < 10; unitCounter++)
+      var testUnits = unit(unitCounter * 100, unitCounter * 100, unitCounter, "normal");
 
   for (i = 0; i < unitList.length; i++)
   {
@@ -133,6 +134,12 @@ io.sockets.on('connection', function(socket)
     socket.id = Math.random();
     SOCKET_LIST[socket.id] = socket;
 
+
+    socket.on('createUnit', function(data)
+    {
+        var u = unit(data.x, data.y, unitCounter++, "normal");
+    });
+
     // Fires when someone leaves the page
     // Deletes the socket from SOCKET_LIST
     socket.on('disconnect',function()
@@ -149,4 +156,4 @@ setInterval(function()
         var socket = SOCKET_LIST[i];
         socket.emit('update', unitList);
     }
-},40);
+}, 40);

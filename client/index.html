@@ -55,6 +55,7 @@
     var mouseY = 0; // Y coordinate of mouse
     var mouseDown = false;
     var mouseClickPos = { x: 0, y: 0 }; // Position of last mouseclick
+    var rightClick = false;
 
     var keyOffsetX = 0; // Amount camera has moved horizontally since click via keys
     var keyOffsetY = 0; // Amount camera has moved vertically since click via keys
@@ -66,6 +67,7 @@
 
     var unitList = []; // Array containing all units
     var selectedUnitList = []; // Array containing selected units
+    var unitsSelected = false; // True if any units are selected (for right click)
 
     var WIDTH = window.innerWidth; // Width of browser window at gameload
     var HEIGHT = window.innerHeight; // Height of browser window at gameload
@@ -134,28 +136,48 @@
         if (event.stopPropagation !== undefined) event.stopPropagation();
     };
 
-    document.onmousedown = function (event) // Mouse click down listener
+    var resetUnits = function()
     {
-        var button = event.button;
-
-        if (button === 2)
-            if (DEBUG) console.log("Right Mouse Click");
-        else if (button === 0)
-            if (DEBUG) console.log("Left Mouse Click");
-
-        mouseDown = true;
-        mouseClickPos.x = event.clientX;
-        mouseClickPos.y = event.clientY;
-
-        // Reset selected units
         for (var i = 0; i < selectedUnitList.length; i++)
             unitList[selectedUnitList[i]].selected = false;
-
         selectedUnitList = [];
+        unitsSelected = false;
+    };
+
+    document.onmousedown = function (event) // Mouse click down listener
+    {
+        i = 0;
+
+        var button = event.button;
+        mouseClickPos.x = event.clientX;
+        mouseClickPos.y = event.clientY;
 
         // Get REAL position
         mouseXBeforeClick = event.clientX - screenX;
         mouseYBeforeClick = event.clientY - screenY;
+
+        if (button === 2) // Right
+        {
+            rightClick = true;
+            if (unitsSelected)
+            {
+                console.log("MoveTo");
+                unitsSelected = false;
+                socket.emit('moveTo', selectedUnitList);
+                resetUnits();
+            }
+            else
+            {
+                socket.emit('createUnit', {x: mouseXBeforeClick, y: mouseYBeforeClick});
+            }
+        }
+        else if (button === 0) // Left
+        {
+            mouseDown = true;
+            unitsSelected = false;
+            // Reset Selected units
+            resetUnits();
+        }
 
         if (DEBUG) console.log("Click -> X: " + mouseClickPos.x
             + " Y: " + mouseClickPos.y);
@@ -196,15 +218,22 @@
             bottom = mouseYAfterClick;
         }
 
-        // Check if clicked on any units OR highlighted any units in area
-        for (var i = 0; i < unitList.length; i++)
-            if ((left >= unitList[i].x && left <= unitList[i].x + Img.unit.width) && (top >= unitList[i].y
-                && top <= unitList[i].y + Img.unit.height) || ((unitList[i].x >= left && unitList[i].x <= right)
-                && (unitList[i].y >= top && unitList[i].y <= bottom)))
+        if (rightClick) rightClick = false;
+        else
+        {
+            // Check if clicked on any units OR highlighted any units in area
+            for (var i = 0; i < unitList.length; i++)
             {
-                selectedUnitList.push(i);
-                unitList[i].selected = true;
+                if ((left >= unitList[i].x && left <= unitList[i].x + Img.unit.width) && (top >= unitList[i].y
+                        && top <= unitList[i].y + Img.unit.height) || ((unitList[i].x >= left && unitList[i].x <= right)
+                        && (unitList[i].y >= top && unitList[i].y <= bottom)))
+                {
+                    unitsSelected = true;
+                    selectedUnitList.push(i);
+                    unitList[i].selected = true;
+                }
             }
+        }
     };
 
     // Creates the socket.io object
@@ -239,15 +268,16 @@
         unitList = data;
     });
 
-
-    // Sets the map grid on update (25 times a second)
     socket.on('update', function (data)
     {
-        for (var i = 0; i < data.length; i++)
+        unitList = data;
+
+        // Update selected
+        for (var i = 0; i < selectedUnitList.length; i++)
         {
-            unitList[i].x = data[i].x;
-            unitList[i].y = data[i].y;
+            unitList[selectedUnitList[i]].selected = true;
         }
+
     });
 
     /*
@@ -286,7 +316,7 @@
         {
             for (var j = 0; j < sizeOfMapMatrix; j++)
             {
-                var fillType = mapMatrix[i][j].type;
+                if (mapMatrix[i][j]) var fillType = mapMatrix[i][j].type;
                 var xOffset = screenX + (100 * j);
                 var yOffset = screenY + (100 * i);
 
