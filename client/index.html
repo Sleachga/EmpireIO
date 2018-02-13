@@ -35,7 +35,6 @@
 
 <div id="canvasContainer">
     <canvas id="ctx" width="500" height="500"></canvas>
-    <canvas id="minimap" width="200" height="200"></canvas>
 </div>
 
 <br>
@@ -66,6 +65,7 @@
     var mouseX = 0; // X coordinate of mouse
     var mouseY = 0; // Y coordinate of mouse
     var mouseDown = false;
+    var shiftDown = false;
     var mouseClickPos = { x: 0, y: 0 }; // Position of last mouseclick
     var rightClick = false;
 
@@ -165,6 +165,16 @@
         unitsSelected = false;
     };
 
+    document.onkeydown = function(e)
+    {
+        if (e.keyCode === 16) shiftDown = true;
+    };
+
+    document.onkeyup = function(e)
+    {
+        if (e.keyCode === 16) shiftDown = false;
+    };
+
     document.onmousedown = function (event) // Mouse click down listener
     {
         i = 0;
@@ -195,10 +205,13 @@
         }
         else if (button === 0) // Left
         {
-            mouseDown = true;
-            unitsSelected = false;
-            // Reset Selected units
-            resetUnits();
+            if (!shiftDown)
+            {
+                mouseDown = true;
+                unitsSelected = false;
+                // Reset Selected units
+                resetUnits();
+            }
         }
 
         if (DEBUG) console.log("Click -> X: " + mouseClickPos.x
