@@ -10,14 +10,17 @@ html {
 
 body {
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
 }
 
 #ctx {
-    position: absolute;
-    width: 100%;
-    height: 100%;
     cursor: none;
+}
+
+#minimap {
+    position: absolute;
+    bottom: 0;
+    right: 0;
 }
 
 #mapRandButton {

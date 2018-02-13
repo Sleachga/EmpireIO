@@ -25,18 +25,20 @@
     <title>Empire IO</title>
     <link rel="icon" href="/client/img/favicon.ico"/>
     <link rel="stylesheet" href="/client/index.css"/>
+
+    <script src="/client/jquery-3.3.1.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="/client/img/images.js"></script>
 </head>
 
 <body>
 
 <div id="canvasContainer">
     <canvas id="ctx" width="500" height="500"></canvas>
+    <canvas id="minimap" width="200" height="200"></canvas>
 </div>
 
 <br>
-
-<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-<script src="/client/img/images.js"></script>
 
 <script>
     var DEBUG = false;
@@ -44,12 +46,22 @@
     // Prevents going back or forward a page by two finger swipe
     document.body.addEventListener('wheel', function (e) { e.preventDefault();});
 
+    var WIDTH = window.innerWidth; // Width of browser window at gameload
+    var HEIGHT = window.innerHeight; // Height of browser window at gameload
+
     // Creates an object for the canvas
     var ctx = document.getElementById("ctx").getContext("2d");
-
-    ctx.canvas.width = window.innerWidth - 20;
-    ctx.canvas.height = window.innerHeight - 20;
+    ctx.canvas.width = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
     ctx.font = '30px Arial';
+
+    $(window).resize(function()
+    {
+        ctx.canvas.width = $(window).width();
+        ctx.canvas.height = $(window).height();
+        WIDTH = $(window).width();
+        HEIGHT = $(window).height();
+    });
 
     var mouseX = 0; // X coordinate of mouse
     var mouseY = 0; // Y coordinate of mouse
@@ -69,8 +81,6 @@
     var selectedUnitList = []; // Array containing selected units
     var unitsSelected = false; // True if any units are selected (for right click)
 
-    var WIDTH = window.innerWidth; // Width of browser window at gameload
-    var HEIGHT = window.innerHeight; // Height of browser window at gameload
     var screenX = 0; // horizontal position of the screen in the game
     var screenY = 0; // vertical position of the screen in the game
     var cameraSpeed = 3; // Speed per pixels camera moves
@@ -83,18 +93,29 @@
         };
 
     var minimap = // Object to draw minimap (in-progress)
-        {
-            width: WIDTH / 5,
-            height: HEIGHT / 5,
-            x: ((WIDTH / 5) * 4),
-            y: ((HEIGHT / 5) * 4)
-        };
+    {
+        width: WIDTH / 5,
+        height: HEIGHT / 5,
+        x: ((WIDTH / 5) * 4),
+        y: ((HEIGHT / 5) * 4)
+    };
+
+    var updateMiniMap = function()
+    {
+        var HorW = (HEIGHT < WIDTH) ? HEIGHT : WIDTH;
+
+        minimap.width = HorW / 5;
+        minimap.height = HorW / 5;
+        minimap.x = ((WIDTH / 5) * 4);
+        minimap.y = ((HEIGHT / 5) * 4);
+    };
 
     var drawMiniMap = function () // function to draw minimap (in-progress)
     {
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = "black";
-        ctx.fillRect(minimap.x, minimap.y, minimap.height, minimap.height);
+        updateMiniMap();
+        ctx.fillRect(minimap.x, minimap.y, minimap.width, minimap.height);
         ctx.globalAlpha = 1;
     };
 
@@ -168,7 +189,8 @@
             }
             else
             {
-                socket.emit('createUnit', {x: mouseXBeforeClick, y: mouseYBeforeClick});
+                socket.emit('createUnit', {x: mouseXBeforeClick - (Img.unit.width / 2),
+                    y: mouseYBeforeClick - (Img.unit.height / 2)});
             }
         }
         else if (button === 0) // Left
@@ -390,10 +412,7 @@
         ctx.globalAlpha = 1;
         ctx.fillStyle = 'white';
         ctx.font = "30px Verdana";
-        ctx.fillText("X: " + mouseX + " Y: "
-            + mouseY + " FirstClickX: " + mouseXBeforeClick
-            + " FirstClickY: " + mouseYBeforeClick
-            + " click: " + mouseDown, WIDTH / 2 - 400, 30);
+        ctx.fillText("X: " + mouseX + " Y: " + mouseY, WIDTH / 2, 30);
     }
 
 </script>

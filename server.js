@@ -33,11 +33,7 @@ var unitCounter = 0;
 // Constructor for unit
 var unit = function(x, y, id, type)
 {
-    var self =
-    {
-        id: "",
-        type: 0
-    };
+    var self = Entity();
 
     self.id = id;
     self.type = type;
