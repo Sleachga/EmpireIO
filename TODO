@@ -1,5 +1,8 @@
 TODO:
 
+1.  Differentiate between your troops and opponents
+2.  Combat -> Draw a line between troops
+
 Canvas onLeftClick highlights a region and commands
 all units in that area.  Add a goto point function
 
@@ -30,3 +33,5 @@ EX:
                          /     \
     finishing area ~~~>  |  *  |
                          \_____/
+
+INSTEAD -> Put a number next to the type of unit to show how many are there.  If multiple types of units put next to each other or something.

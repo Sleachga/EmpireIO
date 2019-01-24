@@ -10,7 +10,7 @@ app.get('/',function(req, res) {
 });
 
 // Tells server where to find needed files
-app.use('/client',express.static(__dirname + '/client'));
+app.use('/client', express.static(__dirname + '/client'));
 
 serv.listen(process.env.PORT || 2000);
 if (DEBUG) console.log("Server started.");
@@ -47,7 +47,7 @@ var unit = function(x, y, id, type)
 };
 
 // Object containing the map grid (0-25)
-var mapGrid = new Array(10000);
+var mapGrid = new Array(625);
 
 // Default for Map Cells
 var mapCell = function(id, type)

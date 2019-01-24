@@ -10,7 +10,7 @@
        |\   ,____
        | \  \/   `.
        \ `-.:.     `\
-        `-.__ `\=====|   Hey there! Fork me at https://github.com/Sleachga/EmpireIO
+        `-.__ `\=====|   Hey there! Check me out at https://github.com/Sleachga/EmpireIO
            /=`'/   ^_\  /
          .'   /\   .=)
       .-'  .'|  '-(/_|
@@ -21,10 +21,11 @@
 -->
 
 <html>
+
 <head>
     <title>Empire IO</title>
-    <link rel="icon" href="/client/img/favicon.ico"/>
-    <link rel="stylesheet" href="/client/index.css"/>
+    <link rel="icon" href="/client/img/favicon.ico" />
+    <link rel="stylesheet" href="/client/index.css" />
 
     <script src="/client/jquery-3.3.1.min.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
@@ -33,58 +34,60 @@
 
 <body>
 
-<div id="canvasContainer">
-    <canvas id="ctx" width="500" height="500"></canvas>
-</div>
+    <div id="canvasContainer">
+        <canvas id="ctx" width="500" height="500"></canvas>
+    </div>
 
-<br>
+    <br>
 
-<script>
-    var DEBUG = false;
+    <script>
+        var DEBUG = false;
 
-    // Prevents going back or forward a page by two finger swipe
-    document.body.addEventListener('wheel', function (e) { e.preventDefault();});
+        // Prevents going back or forward a page by two finger swipe
+        document.body.addEventListener('wheel', function (e) { e.preventDefault(); });
 
-    var WIDTH = window.innerWidth; // Width of browser window at gameload
-    var HEIGHT = window.innerHeight; // Height of browser window at gameload
+        var WIDTH = window.innerWidth; // Width of browser window at gameload
+        var HEIGHT = window.innerHeight; // Height of browser window at gameload
 
-    // Creates an object for the canvas
-    var ctx = document.getElementById("ctx").getContext("2d");
-    ctx.canvas.width = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
-    ctx.font = '30px Arial';
+        // Creates an object for the canvas
+        var ctx = document.getElementById("ctx").getContext("2d");
+        ctx.canvas.width = window.innerWidth;
+        ctx.canvas.height = window.innerHeight;
+        ctx.font = '30px Arial';
 
-    $(window).resize(function()
-    {
-        ctx.canvas.width = $(window).width();
-        ctx.canvas.height = $(window).height();
-        WIDTH = $(window).width();
-        HEIGHT = $(window).height();
-    });
+        $(window).resize(function () {
+            ctx.canvas.width = $(window).width();
+            ctx.canvas.height = $(window).height();
+            WIDTH = $(window).width();
+            HEIGHT = $(window).height();
+        });
 
-    var mouseX = 0; // X coordinate of mouse
-    var mouseY = 0; // Y coordinate of mouse
-    var mouseDown = false;
-    var shiftDown = false;
-    var mouseClickPos = { x: 0, y: 0 }; // Position of last mouseclick
-    var rightClick = false;
+        var mouseX = 0; // X coordinate of mouse
+        var mouseY = 0; // Y coordinate of mouse
+        var mouseDown = false;
+        var shiftDown = false;
+        var mouseClickPos = { x: 0, y: 0 }; // Position of last mouseclick
+        var rightClick = false;
 
-    var keyOffsetX = 0; // Amount camera has moved horizontally since click via keys
-    var keyOffsetY = 0; // Amount camera has moved vertically since click via keys
+        var keyOffsetX = 0; // Amount camera has moved horizontally since click via keys
+        var keyOffsetY = 0; // Amount camera has moved vertically since click via keys
 
-    var mouseXBeforeClick = 0;
-    var mouseYBeforeClick = 0;
-    var mouseXAfterClick = 0;
-    var mouseYAfterClick = 0;
+        var mouseXBeforeClick = 0;
+        var mouseYBeforeClick = 0;
+        var mouseXAfterClick = 0;
+        var mouseYAfterClick = 0;
 
-    var unitList = []; // Array containing all units
-    var selectedUnitList = []; // Array containing selected units
-    var unitsSelected = false; // True if any units are selected (for right click)
+        var unitList = []; // Array containing all units
+        var selectedUnitList = []; // Array containing selected units
+        var unitsSelected = false; // True if any units are selected (for right click)
 
-    var screenX = 0; // horizontal position of the screen in the game
-    var screenY = 0; // vertical position of the screen in the game
-    var cameraSpeed = 3; // Speed per pixels camera moves
-    var keys = // Object to keep track of which keys are pressed
+        var screenX = 0; // horizontal position of the screen in the game
+        var screenY = 0; // vertical position of the screen in the game
+        var cameraSpeed = { x: 0, y: 0 } // Speed per pixels camera moves
+        var cameraAccel = 0.4; // Amount per pixels speed accelerates per frame
+        var cameraMaxSpeed = 10; // Maximum speed of camera
+        let minimumScreenEdge = 50; // How far outside the map user can go
+        var keys = // Object to keep track of which keys are pressed
         {
             up: false,
             down: false,
@@ -92,342 +95,363 @@
             right: false
         };
 
-    var minimap = // Object to draw minimap (in-progress)
-    {
-        width: WIDTH / 5,
-        height: HEIGHT / 5,
-        x: ((WIDTH / 5) * 4),
-        y: ((HEIGHT / 5) * 4)
-    };
-
-    var updateMiniMap = function()
-    {
-        var HorW = (HEIGHT < WIDTH) ? HEIGHT : WIDTH;
-
-        minimap.width = HorW / 5;
-        minimap.height = HorW / 5;
-        minimap.x = ((WIDTH / 5) * 4);
-        minimap.y = ((HEIGHT / 5) * 4);
-    };
-
-    var drawMiniMap = function () // function to draw minimap (in-progress)
-    {
-        ctx.globalAlpha = 0.5;
-        ctx.fillStyle = "black";
-        updateMiniMap();
-        ctx.fillRect(minimap.x, minimap.y, minimap.width, minimap.height);
-        ctx.globalAlpha = 1;
-    };
-
-    document.onkeydown = function (event) // Movement key down listener
-    {
-        if (event.keyCode === 68 || event.keyCode === 39) //d or right
-            keys.right = true;
-        else if (event.keyCode === 65 || event.keyCode === 37) //a or left
-            keys.left = true;
-        else if (event.keyCode === 83 || event.keyCode === 40) //s or down
-            keys.down = true;
-        else if (event.keyCode === 87 || event.keyCode === 38) //w or up
-            keys.up = true;
-    };
-
-    document.onkeyup = function (event) // Movement key up listener
-    {
-        if (event.keyCode === 68 || event.keyCode === 39) //d or right
-            keys.right = false;
-        else if (event.keyCode === 65 || event.keyCode === 37) //a or left
-            keys.left = false;
-        else if (event.keyCode === 83 || event.keyCode === 40) //s or down
-            keys.down = false;
-        else if (event.keyCode === 87 || event.keyCode === 38) //w or up
-            keys.up = false;
-    };
-
-    document.onmousemove = function (event) // Mouse move listener
-    {
-        // Set global mouseX and mouseY variables
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-    };
-
-    // Keeps the right click from popping a menu up
-    document.oncontextmenu = function(event)
-    {
-        if (event.preventDefault !== undefined) event.preventDefault();
-        if (event.stopPropagation !== undefined) event.stopPropagation();
-    };
-
-    var resetUnits = function()
-    {
-        for (var i = 0; i < selectedUnitList.length; i++)
-            unitList[selectedUnitList[i]].selected = false;
-        selectedUnitList = [];
-        unitsSelected = false;
-    };
-
-    document.onkeydown = function(e)
-    {
-        if (e.keyCode === 16) shiftDown = true;
-    };
-
-    document.onkeyup = function(e)
-    {
-        if (e.keyCode === 16) shiftDown = false;
-    };
-
-    document.onmousedown = function (event) // Mouse click down listener
-    {
-        i = 0;
-
-        var button = event.button;
-        mouseClickPos.x = event.clientX;
-        mouseClickPos.y = event.clientY;
-
-        // Get REAL position
-        mouseXBeforeClick = event.clientX - screenX;
-        mouseYBeforeClick = event.clientY - screenY;
-
-        if (button === 2) // Right
+        var minimap = // Object to draw minimap (in-progress)
         {
-            rightClick = true;
-            if (unitsSelected)
-            {
-                console.log("MoveTo");
-                unitsSelected = false;
-                socket.emit('moveTo', selectedUnitList);
-                resetUnits();
-            }
-            else
-            {
-                socket.emit('createUnit', {x: mouseXBeforeClick - (Img.unit.width / 2),
-                    y: mouseYBeforeClick - (Img.unit.height / 2)});
-            }
-        }
-        else if (button === 0) // Left
+            width: WIDTH / 5,
+            height: HEIGHT / 5,
+            x: ((WIDTH / 5) * 4),
+            y: ((HEIGHT / 5) * 4)
+        };
+
+        var updateMiniMap = function () {
+            var HorW = (HEIGHT < WIDTH) ? HEIGHT : WIDTH;
+
+            minimap.width = HorW / 5;
+            minimap.height = HorW / 5;
+            minimap.x = ((WIDTH / 5) * 4);
+            minimap.y = ((HEIGHT / 5) * 4);
+        };
+
+        var drawMiniMap = function () // function to draw minimap (in-progress)
         {
-            if (!shiftDown)
-            {
-                mouseDown = true;
-                unitsSelected = false;
-                // Reset Selected units
-                resetUnits();
-            }
-        }
-
-        if (DEBUG) console.log("Click -> X: " + mouseClickPos.x
-            + " Y: " + mouseClickPos.y);
-    };
-
-    document.onmouseup = function(event) // Mouse click up listener
-    {
-        mouseDown = false;
-        keyOffsetX = 0;
-        keyOffsetY = 0;
-
-        // Get REAL position
-        mouseXAfterClick = event.clientX - screenX;
-        mouseYAfterClick = event.clientY - screenY;
-
-        // Sort coordinates to get top left and bottom right every time
-        var left, right, top, bottom;
-
-        if (mouseXBeforeClick > mouseXAfterClick)
-        {
-            left = mouseXAfterClick;
-            right = mouseXBeforeClick;
-        }
-        else
-        {
-            left = mouseXBeforeClick;
-            right = mouseXAfterClick;
-        }
-
-        if (mouseYBeforeClick > mouseYAfterClick)
-        {
-            top = mouseYAfterClick;
-            bottom = mouseYBeforeClick;
-        }
-        else
-        {
-            top = mouseYBeforeClick;
-            bottom = mouseYAfterClick;
-        }
-
-        if (rightClick) rightClick = false;
-        else
-        {
-            // Check if clicked on any units OR highlighted any units in area
-            for (var i = 0; i < unitList.length; i++)
-            {
-                if ((left >= unitList[i].x && left <= unitList[i].x + Img.unit.width) && (top >= unitList[i].y
-                        && top <= unitList[i].y + Img.unit.height) || ((unitList[i].x >= left && unitList[i].x <= right)
-                        && (unitList[i].y >= top && unitList[i].y <= bottom)))
-                {
-                    unitsSelected = true;
-                    selectedUnitList.push(i);
-                    unitList[i].selected = true;
-                }
-            }
-        }
-    };
-
-    // Creates the socket.io object
-    var socket = io();
-
-    // Create Map Matrix Grid
-    var sizeOfMapMatrix = 100; // Amount of rows and columns in grid
-    var mapMatrix = new Array(sizeOfMapMatrix);
-    for (var i = 0; i < sizeOfMapMatrix; i++)
-        mapMatrix[i] = new Array(sizeOfMapMatrix);
-
-    // Initially sets the map grid
-    socket.on('mapInit', function (data)
-    {
-        var mapGrid = data;
-
-        // Convert into 2d array
-        var counter = 0;
-
-        for (var i = 0; i < mapMatrix.length; i++)
-        {
-            for (var j = 0; j < mapMatrix[i].length; j++)
-            {
-                if (DEBUG) console.log(mapGrid[counter]);
-                mapMatrix[i][j] = mapGrid[counter++];
-            }
-        }
-    });
-
-    socket.on('unitInit', function(data)
-    {
-        unitList = data;
-    });
-
-    socket.on('update', function (data)
-    {
-        unitList = data;
-
-        // Update selected
-        for (var i = 0; i < selectedUnitList.length; i++)
-        {
-            unitList[selectedUnitList[i]].selected = true;
-        }
-
-    });
-
-    /*
-      Essentially the main loop, game logic and canvas drawing
-      Goes on here
-    */
-    setInterval(function ()
-    {
-        if (keys.right)
-        {
-            screenX -= cameraSpeed; // Move camera right
-            if (mouseDown) keyOffsetX += cameraSpeed;
-        }
-        if (keys.left)
-        {
-            screenX += cameraSpeed; // Move camera left
-            if (mouseDown) keyOffsetX -= cameraSpeed;
-        }
-        if (keys.up)
-        {
-            screenY += cameraSpeed; // Move camera up
-            if (mouseDown) keyOffsetY -= cameraSpeed;
-        }
-        if (keys.down)
-        {
-            screenY -= cameraSpeed; // Move camera down
-            if (mouseDown) keyOffsetY += cameraSpeed;
-        }
-
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-        var i; // iterator
-
-        // Reads the Map Matrix and colors the tiles accordingly
-        for (i = 0; i < sizeOfMapMatrix; i++)
-        {
-            for (var j = 0; j < sizeOfMapMatrix; j++)
-            {
-                if (mapMatrix[i][j]) var fillType = mapMatrix[i][j].type;
-                var xOffset = screenX + (100 * j);
-                var yOffset = screenY + (100 * i);
-
-                switch (fillType)
-                {
-                    case 1:
-                        ctx.drawImage(Img.foodTile1, xOffset, yOffset);
-                        break;
-
-                    case 2:
-                        ctx.drawImage(Img.stoneTile1, xOffset, yOffset);
-                        break;
-
-                    case 3:
-                        ctx.drawImage(Img.forestTile1, xOffset, yOffset);
-                        break;
-
-                    case 4:
-                        ctx.drawImage(Img.goldTile1, xOffset, yOffset);
-                        break;
-
-                    default:
-                        ctx.fillStyle = 'white';
-                        ctx.fillRect(xOffset, yOffset, 100, 100);
-                }
-            }
-        }
-        // TODO Function to check where the mouse is (highlight tile)
-
-        // Set and draw units
-        if (unitList)
-        {
-            for (i = 0; i < unitList.length; i++)
-            {
-                var unit = unitList[i];
-
-                if (unit.selected) ctx.drawImage(Img.unit_selected, screenX + unit.x, screenY + unit.y);
-                else ctx.drawImage(Img.unit, screenX + unit.x, screenY + unit.y);
-            }
-        }
-
-        ctx.fillStyle = "black";
-
-        if (mouseDown) // Draw the highlight if clicking
-        {
-            var width = mouseX - mouseClickPos.x;
-            var height = mouseY - mouseClickPos.y;
-
-            ctx.fillStyle = 'red';
-            ctx.globalAlpha = 0.2;
-            ctx.fillRect(mouseClickPos.x - keyOffsetX,
-                mouseClickPos.y - keyOffsetY, width + keyOffsetX,
-                height + keyOffsetY);
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = "black";
+            updateMiniMap();
+            ctx.fillRect(minimap.x, minimap.y, minimap.width, minimap.height);
             ctx.globalAlpha = 1;
+        };
+
+        document.addEventListener('keydown', function (event) {
+            if (event.keyCode === 68 || event.keyCode === 39) { //d or right
+                keys.right = true;
+            }
+            else if (event.keyCode === 65 || event.keyCode === 37) {//a or left
+                keys.left = true;
+            }
+            else if (event.keyCode === 83 || event.keyCode === 40) { //s or down
+                keys.down = true;
+            }
+            else if (event.keyCode === 87 || event.keyCode === 38) { //w or up
+                keys.up = true;
+            }
+        });
+
+        document.addEventListener('keyup', function (event) { // Movement key up listener
+            if (event.keyCode === 68 || event.keyCode === 39) { // d or right
+                keys.right = false;
+            }
+            else if (event.keyCode === 65 || event.keyCode === 37) { // a or left
+                keys.left = false;
+            }
+            else if (event.keyCode === 83 || event.keyCode === 40) { // s or down
+                keys.down = false;
+            }
+            else if (event.keyCode === 87 || event.keyCode === 38) {// w or up
+                keys.up = false;
+            }
+        });
+
+        document.onmousemove = function (event) { // Mouse move listener
+            // Set global mouseX and mouseY variables
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        };
+
+        // Keeps the right click from popping a menu up
+        document.oncontextmenu = function (event) {
+            if (event.preventDefault !== undefined) event.preventDefault();
+            if (event.stopPropagation !== undefined) event.stopPropagation();
+        };
+
+        var resetUnits = function () {
+            for (var i = 0; i < selectedUnitList.length; i++)
+                unitList[selectedUnitList[i]].selected = false;
+            selectedUnitList = [];
+            unitsSelected = false;
+        };
+
+        document.onkeydown = function (e) {
+            if (e.keyCode === 16) shiftDown = true;
+        };
+
+        document.onkeyup = function (e) {
+            if (e.keyCode === 16) shiftDown = false;
+        };
+
+        document.onmousedown = function (event) { // Mouse click down listener
+            i = 0;
+
+            var button = event.button;
+            mouseClickPos.x = event.clientX;
+            mouseClickPos.y = event.clientY;
+
+            // Get REAL position
+            mouseXBeforeClick = event.clientX - screenX;
+            mouseYBeforeClick = event.clientY - screenY;
+
+            if (button === 2) // Right
+            {
+                rightClick = true;
+                if (unitsSelected) {
+                    console.log("MoveTo");
+                    unitsSelected = false;
+                    socket.emit('moveTo', selectedUnitList);
+                    resetUnits();
+                }
+                else {
+                    socket.emit('createUnit', {
+                        x: mouseXBeforeClick - (Img.unit.width / 2),
+                        y: mouseYBeforeClick - (Img.unit.height / 2)
+                    });
+                }
+            }
+            else if (button === 0) // Left
+            {
+                if (!shiftDown) {
+                    mouseDown = true;
+                    unitsSelected = false;
+                    // Reset Selected units
+                    resetUnits();
+                }
+            }
+
+            if (DEBUG) console.log("Click -> X: " + mouseClickPos.x
+                + " Y: " + mouseClickPos.y);
+        };
+
+        document.onmouseup = function (event) { // Mouse click up listener
+            mouseDown = false;
+            keyOffsetX = 0;
+            keyOffsetY = 0;
+
+            // Get REAL position
+            mouseXAfterClick = event.clientX - screenX;
+            mouseYAfterClick = event.clientY - screenY;
+
+            // Sort coordinates to get top left and bottom right every time
+            var left, right, top, bottom;
+
+            if (mouseXBeforeClick > mouseXAfterClick) {
+                left = mouseXAfterClick;
+                right = mouseXBeforeClick;
+            }
+            else {
+                left = mouseXBeforeClick;
+                right = mouseXAfterClick;
+            }
+
+            if (mouseYBeforeClick > mouseYAfterClick) {
+                top = mouseYAfterClick;
+                bottom = mouseYBeforeClick;
+            }
+            else {
+                top = mouseYBeforeClick;
+                bottom = mouseYAfterClick;
+            }
+
+            if (rightClick) rightClick = false;
+            else {
+                // Check if clicked on any units OR highlighted any units in area
+                for (var i = 0; i < unitList.length; i++) {
+                    if ((left >= unitList[i].x && left <= unitList[i].x + Img.unit.width) && (top >= unitList[i].y
+                        && top <= unitList[i].y + Img.unit.height) || ((unitList[i].x >= left && unitList[i].x <= right)
+                            && (unitList[i].y >= top && unitList[i].y <= bottom))) {
+                        unitsSelected = true;
+                        selectedUnitList.push(i);
+                        unitList[i].selected = true;
+                    }
+                }
+            }
+        };
+
+        // Creates the socket.io object
+        var socket = io();
+
+        // Create Map Matrix Grid
+        var sizeOfMapMatrix = 25; // Amount of rows and columns in grid
+        var mapMatrix = new Array(sizeOfMapMatrix);
+        for (var i = 0; i < sizeOfMapMatrix; i++)
+            mapMatrix[i] = new Array(sizeOfMapMatrix);
+
+        // Initially sets the map grid
+        socket.on('mapInit', function (data) {
+            var mapGrid = data;
+
+            // Convert into 2d array
+            var counter = 0;
+
+            for (var i = 0; i < mapMatrix.length; i++) {
+                for (var j = 0; j < mapMatrix[i].length; j++) {
+                    if (DEBUG) console.log(mapGrid[counter]);
+                    mapMatrix[i][j] = mapGrid[counter++];
+                }
+            }
+        });
+
+        socket.on('unitInit', function (data) {
+            unitList = data;
+        });
+
+        socket.on('update', function (data) {
+            unitList = data;
+
+            // Update selected
+            for (var i = 0; i < selectedUnitList.length; i++) {
+                unitList[selectedUnitList[i]].selected = true;
+            }
+
+        });
+
+        /*
+          Essentially the main loop, game logic and canvas drawing
+          Goes on here
+        */
+        setInterval(function () {
+            // Max edges of map
+            let edgeOfMap = -((sizeOfMapMatrix * 100) + minimumScreenEdge);
+
+            // Make speed 0 if very close to 0
+            if (cameraSpeed.x < 0.4 && cameraSpeed.x > - 0.4) {
+                cameraSpeed.x = 0;
+            }
+            if (cameraSpeed.y < 0.4 && cameraSpeed.y > - 0.4) {
+                cameraSpeed.y = 0;
+            }
+
+            if (screenX <= (edgeOfMap + WIDTH) || screenX >= minimumScreenEdge) {
+                cameraSpeed.x = 0;
+                
+                // Fix to be able to move again
+                if (screenX >= minimumScreenEdge) screenX = minimumScreenEdge - 0.1;
+                if (screenX <= (edgeOfMap + WIDTH)) screenX = (edgeOfMap + WIDTH) + 0.1;
+            }
+            else {
+                // Handle Key Presses to move camera right or left
+                if (keys.right && cameraSpeed.x < cameraMaxSpeed) {
+                cameraSpeed.x += cameraAccel;
+                }
+                if (keys.left && cameraSpeed.x > -cameraMaxSpeed) {
+                    cameraSpeed.x -= cameraAccel;
+                }
+            }
+
+            if (screenY <= (edgeOfMap + HEIGHT) || screenY >= minimumScreenEdge) {
+                cameraSpeed.y = 0;
+
+                // Fix to be able to move again
+                if (screenY >= minimumScreenEdge) screenY = minimumScreenEdge - 0.1;
+                if (screenY <= (edgeOfMap + HEIGHT)) screenY = (edgeOfMap + HEIGHT) + 0.1;
+            }
+            else {
+                // Handle Key Presses to move camera right or left
+                if (keys.down && cameraSpeed.y < cameraMaxSpeed) {
+                cameraSpeed.y += cameraAccel;
+                }
+                if (keys.up && cameraSpeed.y > -cameraMaxSpeed) {
+                    cameraSpeed.y -= cameraAccel;
+                }
+            }
+            
+            // If nothing is being pressed slow down camera or stop if at edge
+            if ((!(keys.up || keys.left || keys.right || keys.down))) {
+                if (cameraSpeed.x > 0) {
+                    cameraSpeed.x -= 0.4;
+                }
+                else if (cameraSpeed.x < 0) {
+                    cameraSpeed.x += 0.4;
+                }
+
+                if (cameraSpeed.y > 0) {
+                    cameraSpeed.y -= 0.4;
+                }
+                else if (cameraSpeed.y < 0) {
+                    cameraSpeed.y += 0.4;
+                }
+            }
+
+            screenX -= cameraSpeed.x;
+            screenY -= cameraSpeed.y;
+
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+            // Reads the Map Matrix and colors the tiles accordingly
+            for (let i = 0; i < sizeOfMapMatrix; i++) {
+                for (var j = 0; j < sizeOfMapMatrix; j++) {
+                    if (mapMatrix[i][j]) var fillType = mapMatrix[i][j].type;
+                    var xOffset = screenX + (100 * j);
+                    var yOffset = screenY + (100 * i);
+
+                    switch (fillType) {
+                        case 1:
+                            ctx.drawImage(Img.foodTile1, xOffset, yOffset);
+                            break;
+
+                        case 2:
+                            ctx.drawImage(Img.stoneTile1, xOffset, yOffset);
+                            break;
+
+                        case 3:
+                            ctx.drawImage(Img.forestTile1, xOffset, yOffset);
+                            break;
+
+                        case 4:
+                            ctx.drawImage(Img.goldTile1, xOffset, yOffset);
+                            break;
+
+                        default:
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(xOffset, yOffset, 100, 100);
+                    }
+                }
+            }
+            // TODO Function to check where the mouse is (highlight tile)
+
+            // Set and draw units
+            if (unitList) {
+                for (let i = 0; i < unitList.length; i++) {
+                    var unit = unitList[i];
+
+                    if (unit.selected) ctx.drawImage(Img.unit_selected, screenX + unit.x, screenY + unit.y);
+                    else ctx.drawImage(Img.unit, screenX + unit.x, screenY + unit.y);
+                }
+            }
+
+            ctx.fillStyle = "black";
+
+            if (mouseDown) // Draw the highlight if clicking
+            {
+                var width = mouseX - mouseClickPos.x;
+                var height = mouseY - mouseClickPos.y;
+
+                ctx.fillStyle = 'red';
+                ctx.globalAlpha = 0.4;
+                ctx.fillRect(mouseClickPos.x - keyOffsetX,
+                    mouseClickPos.y - keyOffsetY, width + keyOffsetX,
+                    height + keyOffsetY);
+                ctx.globalAlpha = 1;
+            }
+
+            //drawMiniMap();
+
+            // Draw mouse cursor
+            ctx.drawImage(Img.cursor, mouseX, mouseY);
+
+            drawScore();
+        }, 40);
+
+        // Draw the bar at the top of page with information (will eventually be score + resource count)
+        var drawScore = function () {
+            ctx.fillStyle = 'black';
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(0, 0, WIDTH, 40);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = 'white';
+            ctx.font = "30px Verdana";
+            ctx.fillText("X: " + mouseX + " Y: " + mouseY
+                + " Screen X: " + Math.floor(screenX * 10) / 10, WIDTH / 2, 30);
         }
 
-        drawMiniMap();
-
-        // Draw mouse cursor
-        ctx.drawImage(Img.cursor, mouseX, mouseY);
-
-        drawScore();
-    }, 40);
-
-    // Draw the bar at the top of page with information (will eventually be score + resource count)
-    var drawScore = function ()
-    {
-        ctx.fillStyle = 'black';
-        ctx.globalAlpha = 0.5;
-        ctx.fillRect(0, 0, WIDTH, 40);
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = 'white';
-        ctx.font = "30px Verdana";
-        ctx.fillText("X: " + mouseX + " Y: " + mouseY, WIDTH / 2, 30);
-    }
-
-</script>
+    </script>
 </body>
+
 </html>
